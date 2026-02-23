@@ -87,7 +87,7 @@ export function spectrumColor(t: number): { r: number; g: number; b: number } {
     const p = -clamped;
     return {
       r: Math.round(255),
-      g: Math.round(255 - p * 215),
+      g: Math.round(255 - p * 255),
       b: Math.round(255 - p * 255),
     };
   }

@@ -16,9 +16,9 @@ const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
 void main() {
   vec3 n = normalize(normalMatrix * normal);
-  vec4 mv = modelViewMatrix * vec4(position, 1.2);
+  vec4 mv = modelViewMatrix * vec4(position, 0.8);
   vec3 eye = normalize(-mv.xyz);
-  vGlow = pow(max(dot(n, eye), 0.1), 1.9);
+  vGlow = pow(max(dot(n, eye), 0.1), 3.6);
   gl_Position = projectionMatrix * mv;
 }`;
 
@@ -83,8 +83,8 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
         <meshStandardMaterial
           color={coreColor}
           emissive={coreColor}
-          emissiveIntensity={6}
-          roughness={0.15}
+          emissiveIntensity={2.5}
+          roughness={0.4}
           metalness={0.0}
           toneMapped={false}
         />
@@ -113,7 +113,7 @@ export default function SpherePreview({
       gl={{
         antialias: false,
         toneMapping: THREE.ACESFilmicToneMapping,
-        toneMappingExposure: 1.0,
+        toneMappingExposure: 1,
       }}
     >
       <ambientLight intensity={0.15} />
