@@ -1,0 +1,19 @@
+{
+  "name": "spheres",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r run dev",
+    "build": "pnpm -r run build",
+    "dev:web": "pnpm --filter @spheres/web dev",
+    "dev:server": "pnpm --filter @spheres/world-server dev",
+    "build:web": "pnpm --filter @spheres/web build",
+    "build:server": "pnpm --filter @spheres/world-server build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild", "@firebase/util", "protobufjs"]
+  }
+}
