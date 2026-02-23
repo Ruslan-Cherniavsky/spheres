@@ -16,9 +16,9 @@ const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
 void main() {
   vec3 n = normalize(normalMatrix * normal);
-  vec4 mv = modelViewMatrix * vec4(position, 1);
+  vec4 mv = modelViewMatrix * vec4(position, 1.2);
   vec3 eye = normalize(-mv.xyz);
-  vGlow = pow(max(dot(n, eye), 0.0), 1.0);
+  vGlow = pow(max(dot(n, eye), 0.1), 1.9);
   gl_Position = projectionMatrix * mv;
 }`;
 
@@ -32,7 +32,7 @@ void main() {
 }`;
 
 const PREVIEW_GLOW = [
-  { scale: 1, opacity: 8 },
+  { scale: 1, opacity: 9 },
 ];
 
 function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
@@ -83,7 +83,7 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
         <meshStandardMaterial
           color={coreColor}
           emissive={coreColor}
-          emissiveIntensity={11}
+          emissiveIntensity={6}
           roughness={0.15}
           metalness={0.0}
           toneMapped={false}
@@ -108,7 +108,7 @@ export default function SpherePreview({
 }) {
   return (
     <Canvas
-      camera={{ position: [0, 0, 5], fov: 45 }}
+      camera={{ position: [0, 0, 10], fov: 45 }}
       style={{ background: 'transparent' }}
       gl={{
         antialias: false,
@@ -126,10 +126,11 @@ export default function SpherePreview({
       />
       <EffectComposer multisampling={8}>
         <Bloom
-          intensity={1.0}
-          luminanceThreshold={0.2}
-          luminanceSmoothing={0.8}
+          intensity={1}
+          luminanceThreshold={0.1}
+          luminanceSmoothing={1}
           mipmapBlur
+          radius={0.55}
         />
       </EffectComposer>
     </Canvas>

@@ -14,9 +14,9 @@ const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
 void main() {
   vec3 n = normalize(normalMatrix * normal);
-  vec4 mv = modelViewMatrix * vec4(position, 1);
+  vec4 mv = modelViewMatrix * vec4(position, 1.2);
   vec3 eye = normalize(-mv.xyz);
-  vGlow = pow(max(dot(n, eye), 0.0), 1.0);
+  vGlow = pow(max(dot(n, eye), 0.1), 1.9);
   gl_Position = projectionMatrix * mv;
 }`;
 
@@ -30,7 +30,7 @@ void main() {
 }`;
 
 const GLOW_LAYERS = [
-  { scale: 1, opacity: 8 },
+  { scale: 1, opacity: 9 },
 ];
 
 interface Props {
@@ -84,7 +84,7 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
         <meshStandardMaterial
           color={coreColor}
           emissive={coreColor}
-          emissiveIntensity={11}
+          emissiveIntensity={2}
           roughness={0.15}
           metalness={0.0}
           toneMapped={false}
