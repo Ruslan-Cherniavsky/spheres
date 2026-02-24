@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useUserStore } from '../stores/userStore';
@@ -15,6 +15,8 @@ export default function AccountPage() {
   const t = useTranslation();
   const navigate = useNavigate();
 
+  const [showRings, setShowRings] = useState(false);
+
   useEffect(() => {
     if (user && !profile) {
       loadProfile(user.uid, user.email || '');
@@ -30,7 +32,7 @@ export default function AccountPage() {
   }
 
   const ringCount = coreValueToRingCount(coreValue);
-  const ringsPercent = (ringCount / 7) * 100;
+  const ringsPercent = ((ringCount - 1) / 6) * 100;
 
   return (
     <div className="account-layout">
@@ -56,6 +58,15 @@ export default function AccountPage() {
             <div className="core-bar-fill" style={{ width: `${ringsPercent}%` }} />
             <span className="core-bar-label">{ringCount} {t.account.rings}</span>
           </div>
+          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => setShowRings((v) => !v)}
+          >
+            {showRings ? t.account.hideRings : t.account.seeRings}
+          </button>
+          </div>
         </div>
 
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -76,7 +87,7 @@ export default function AccountPage() {
 
       {/* Right panel — sphere preview */}
       <div className="sphere-preview-panel">
-        <SpherePreview aura={aura} coreValue={coreValue} />
+        <SpherePreview aura={aura} coreValue={coreValue} showRings={showRings} />
       </div>
     </div>
   );

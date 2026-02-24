@@ -3,8 +3,10 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { AURA_COLORS } from '@spheres/shared';
+import { AURA_COLORS, auraToRingsColor, coreValueToRingCount, getRingLayout } from '@spheres/shared';
 import type { AuraType } from '@spheres/shared';
+
+const PREVIEW_RING_SCALE = 5;
 
 const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
@@ -29,9 +31,57 @@ const PREVIEW_GLOW = [
   { scale: 1, opacity: 9 },
 ];
 
-function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
+const RING_VERTEX = /* glsl */ `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+const RING_FRAGMENT = /* glsl */ `
+uniform vec3 color;
+uniform float opacity;
+varying vec2 vUv;
+void main() {
+  float radial = vUv.x;
+  float inner = smoothstep(0.0, 0.00, radial);
+  float outer = 1.0 - smoothstep(0.88, 0.0, radial);
+  float a = inner * outer * opacity;
+  if (a < 0.001) discard;
+  gl_FragColor = vec4(color, a);
+}`;
+
+function Sphere({ aura, coreValue, showRings }: { aura: AuraType; coreValue: number; showRings: boolean }) {
   const coreRef = useRef<THREE.Mesh>(null!);
   const auraColor = AURA_COLORS[aura];
+  const ringCount = coreValueToRingCount(coreValue);
+  const ringsColor = auraToRingsColor(auraColor);
+  const ringLayout = useMemo(() => getRingLayout(ringCount), [ringCount]);
+
+  const ringMats = useMemo(
+    () =>
+      ringLayout.map(
+        (r) =>
+          new THREE.ShaderMaterial({
+            uniforms: {
+              color: { value: new THREE.Color(ringsColor) },
+              opacity: { value: 0.9 * r.opacityScale },
+            },
+            vertexShader: RING_VERTEX,
+            fragmentShader: RING_FRAGMENT,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending,
+          }),
+      ),
+    [ringLayout, ringsColor],
+  );
+  useEffect(() => {
+    const c = new THREE.Color(ringsColor);
+    ringMats.forEach((m) => m.uniforms.color.value.copy(c));
+  }, [ringsColor, ringMats]);
+  useEffect(() => () => ringMats.forEach((m) => m.dispose()), [ringMats]);
 
   const glowMats = useMemo(
     () =>
@@ -66,7 +116,7 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
   }, [auraColor, glowMats]);
 
   useFrame(() => {
-    if (coreRef.current) coreRef.current.rotation.y += 0.003;
+    if (coreRef.current && !showRings) coreRef.current.rotation.y += 0.003;
   });
 
   return (
@@ -88,6 +138,22 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
           <sphereGeometry args={[2, 32, 32]} />
         </mesh>
       ))}
+
+      {showRings && (
+        <group rotation={[0.1, 0.2, 0]}>
+          {ringLayout.map((ring, i) => (
+            <mesh key={i} material={ringMats[i]} renderOrder={2} position={[0, 0, ring.zOff * PREVIEW_RING_SCALE]}>
+              <ringGeometry
+                args={[
+                  ring.inner * PREVIEW_RING_SCALE,
+                  ring.outer * PREVIEW_RING_SCALE,
+                  128,
+                ]}
+              />
+            </mesh>
+          ))}
+        </group>
+      )}
     </group>
   );
 }
@@ -95,9 +161,11 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
 export default function SpherePreview({
   aura,
   coreValue,
+  showRings = false,
 }: {
   aura: AuraType;
   coreValue: number;
+  showRings?: boolean;
 }) {
   return (
     <Canvas
@@ -110,11 +178,11 @@ export default function SpherePreview({
       }}
     >
       <ambientLight intensity={0.15} />
-      <Sphere aura={aura} coreValue={coreValue} />
+      <Sphere aura={aura} coreValue={coreValue} showRings={showRings} />
       <OrbitControls
         enableZoom={false}
         enablePan={false}
-        autoRotate
+        autoRotate={!showRings}
         autoRotateSpeed={0.8}
       />
       <EffectComposer multisampling={8}>

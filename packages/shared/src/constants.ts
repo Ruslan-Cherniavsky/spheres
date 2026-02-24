@@ -88,8 +88,8 @@ export function auraToRingsColor(auraHex: string): string {
     else if (max === g) h = ((b - r) / d + 2) / 6;
     else h = ((r - g) / d + 4) / 6;
   }
-  const newS = Math.min(s * 0.6, 0.7);
-  const newL = Math.min(l * 0.78, 0.72);
+  const newS = Math.min(s * 0.20, 0.30);
+  const newL = Math.min(l * 0.52, 0.52);
   return hslToHex(h, newS, newL);
 }
 
@@ -120,6 +120,51 @@ function hue2rgb(p: number, q: number, t: number): number {
 export function coreValueToRingCount(coreValue: number): number {
   const t = (coreValue - CORE_VALUE.min) / (CORE_VALUE.max - CORE_VALUE.min);
   return Math.round(t * 6) + 1;
+}
+
+const RING_INNER = 0.58;
+const RING_OUTER = 1.1;
+const RING_GAP = 0.012;
+const GAP_SCALE = [0.6, 1.2, 0.9, 1.15, 0.95, 1.8];
+const WIDTH_SCALE = [0.7, 1.1, 0.95, 1.6, 0.88, 1.7, 0.92];
+
+export interface RingBand {
+  inner: number;
+  outer: number;
+  opacityScale: number;
+  zOff: number;
+}
+
+/** Ring layout for karma rings. 1–3 rings scale up; 4–7 use fixed size. */
+export function getRingLayout(count: number): RingBand[] {
+  const sizeScale = count < 4 ? count / 4 : 1;
+  const fullSpan = RING_OUTER - RING_INNER;
+  const totalSpace = fullSpan * sizeScale;
+  const gaps =
+    count > 1
+      ? Array.from({ length: count - 1 }, (_, i) => RING_GAP * (GAP_SCALE[i % GAP_SCALE.length] ?? 1))
+      : [];
+  const totalGaps = gaps.reduce((a, b) => a + b, 0);
+  const bandArea = totalSpace - totalGaps;
+
+  const baseScales =
+    count > 1 ? Array.from({ length: count }, (_, i) => 0.5 + (0.5 * i) / (count - 1)) : [1];
+  const widthJitter = baseScales.map((s, i) => s * (WIDTH_SCALE[i % WIDTH_SCALE.length] ?? 1));
+  const norm = bandArea / widthJitter.reduce((a, b) => a + b, 0);
+
+  const rings: RingBand[] = [];
+  let cursor = RING_INNER;
+  for (let i = 0; i < count; i++) {
+    const width = widthJitter[i] * norm;
+    rings.push({
+      inner: cursor,
+      outer: cursor + width,
+      opacityScale: 1 - i * (0.4 / 7),
+      zOff: i * 0.004,
+    });
+    cursor += width + (gaps[i] ?? 0);
+  }
+  return rings;
 }
 
 export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'he', 'ru'];

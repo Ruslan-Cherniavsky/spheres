@@ -24,6 +24,8 @@ interface TranslationStrings {
     enterWorld: string;
     ringsLevel: string;
     rings: string;
+    seeRings: string;
+    hideRings: string;
   };
   world: {
     connecting: string;
@@ -73,6 +75,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       enterWorld: 'Enter World',
       ringsLevel: 'Rings Level',
       rings: 'rings',
+      seeRings: 'See rings',
+      hideRings: 'Hide rings',
     },
     world: {
       connecting: 'Connecting to world...',
@@ -120,6 +124,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       enterWorld: 'כניסה לעולם',
       ringsLevel: 'רמת טבעות',
       rings: 'טבעות',
+      seeRings: 'הצג טבעות',
+      hideRings: 'הסתר טבעות',
     },
     world: {
       connecting: '...מתחבר לעולם',
@@ -167,6 +173,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       enterWorld: 'Войти в мир',
       ringsLevel: 'Уровень колец',
       rings: 'колец',
+      seeRings: 'Показать кольца',
+      hideRings: 'Скрыть кольца',
     },
     world: {
       connecting: 'Подключение к миру...',
