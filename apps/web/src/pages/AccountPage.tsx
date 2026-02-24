@@ -6,7 +6,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import SpherePreview from '../components/SpherePreview';
 import AuraPicker from '../components/AuraPicker';
 import LanguageSelector from '../components/LanguageSelector';
-import { AURA_COLORS, CORE_VALUE } from '@spheres/shared';
+import { AURA_COLORS, coreValueToRingCount } from '@spheres/shared';
 
 export default function AccountPage() {
   const { user, signOut } = useAuthStore();
@@ -29,7 +29,8 @@ export default function AccountPage() {
     );
   }
 
-  const corePercent = ((coreValue - CORE_VALUE.min) / (CORE_VALUE.max - CORE_VALUE.min)) * 100;
+  const ringCount = coreValueToRingCount(coreValue);
+  const ringsPercent = (ringCount / 7) * 100;
 
   return (
     <div className="account-layout">
@@ -50,10 +51,10 @@ export default function AccountPage() {
         </div>
 
         <div className="setting-group">
-          <label className="setting-label">{t.account.coreValue}</label>
+          <label className="setting-label">{t.account.ringsLevel}</label>
           <div className="core-bar">
-            <div className="core-bar-fill" style={{ width: `${corePercent}%` }} />
-            <span className="core-bar-label">{coreValue.toFixed(2)}</span>
+            <div className="core-bar-fill" style={{ width: `${ringsPercent}%` }} />
+            <span className="core-bar-label">{ringCount} {t.account.rings}</span>
           </div>
         </div>
 

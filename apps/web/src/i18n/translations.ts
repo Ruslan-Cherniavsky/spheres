@@ -22,7 +22,8 @@ interface TranslationStrings {
     language: string;
     aura: string;
     enterWorld: string;
-    coreValue: string;
+    ringsLevel: string;
+    rings: string;
   };
   world: {
     connecting: string;
@@ -70,7 +71,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       language: 'Language',
       aura: 'Aura',
       enterWorld: 'Enter World',
-      coreValue: 'Core',
+      ringsLevel: 'Rings Level',
+      rings: 'rings',
     },
     world: {
       connecting: 'Connecting to world...',
@@ -116,7 +118,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       language: 'שפה',
       aura: 'אווירה',
       enterWorld: 'כניסה לעולם',
-      coreValue: 'ליבה',
+      ringsLevel: 'רמת טבעות',
+      rings: 'טבעות',
     },
     world: {
       connecting: '...מתחבר לעולם',
@@ -162,7 +165,8 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       language: 'Язык',
       aura: 'Аура',
       enterWorld: 'Войти в мир',
-      coreValue: 'Ядро',
+      ringsLevel: 'Уровень колец',
+      rings: 'колец',
     },
     world: {
       connecting: 'Подключение к миру...',

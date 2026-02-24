@@ -1,14 +1,8 @@
 import { useRef, useMemo, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { AURA_COLORS, spectrumColor, CORE_VALUE } from '@spheres/shared';
+import { AURA_COLORS } from '@spheres/shared';
 import type { AuraType } from '@spheres/shared';
-
-function coreToHex(coreValue: number): string {
-  const t = (coreValue - CORE_VALUE.min) / (CORE_VALUE.max - CORE_VALUE.min) * 2 - 1;
-  const { r, g, b } = spectrumColor(t);
-  return `rgb(${r},${g},${b})`;
-}
 
 const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
@@ -42,7 +36,6 @@ interface Props {
 
 export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = false }: Props) {
   const auraColor = AURA_COLORS[aura];
-  const coreColor = coreToHex(coreValue);
   const coreRef = useRef<THREE.Mesh>(null!);
 
   const glowMats = useMemo(
@@ -82,8 +75,8 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
       <mesh ref={coreRef} renderOrder={0}>
         <sphereGeometry args={[0.2, 32, 32]} />
         <meshStandardMaterial
-          color={coreColor}
-          emissive={coreColor}
+          color={auraColor}
+          emissive={auraColor}
           emissiveIntensity={2}
           roughness={0.15}
           metalness={0.0}

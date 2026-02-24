@@ -31,12 +31,15 @@ export function spawnAISpheres(worldId: string, count: number) {
       z: (Math.random() - 0.5) * 120,
     };
 
+    const ringLevel = (i % 7) + 1;
+    const coreValue = (ringLevel - 1) / 3 - 1;
+
     worldManager.addPlayer(worldId, {
       uid,
       socketId: `ai-socket-${i}`,
       position: pos,
       aura: AI_AURAS[i % AI_AURAS.length],
-      coreValue: Math.random() * 1.2 - 0.6,
+      coreValue,
       status: 'idle',
       isAI: true,
       lastUpdateTs: Date.now(),

@@ -3,14 +3,8 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { AURA_COLORS, spectrumColor, CORE_VALUE } from '@spheres/shared';
+import { AURA_COLORS } from '@spheres/shared';
 import type { AuraType } from '@spheres/shared';
-
-function coreToHex(coreValue: number): string {
-  const t = (coreValue - CORE_VALUE.min) / (CORE_VALUE.max - CORE_VALUE.min) * 2 - 1;
-  const { r, g, b } = spectrumColor(t);
-  return `rgb(${r},${g},${b})`;
-}
 
 const GLOW_VERTEX = /* glsl */ `
 varying float vGlow;
@@ -38,7 +32,6 @@ const PREVIEW_GLOW = [
 function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
   const coreRef = useRef<THREE.Mesh>(null!);
   const auraColor = AURA_COLORS[aura];
-  const coreColor = coreToHex(coreValue);
 
   const glowMats = useMemo(
     () =>
@@ -81,8 +74,8 @@ function Sphere({ aura, coreValue }: { aura: AuraType; coreValue: number }) {
       <mesh ref={coreRef} renderOrder={0}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
-          color={coreColor}
-          emissive={coreColor}
+          color={auraColor}
+          emissive={auraColor}
           emissiveIntensity={2.5}
           roughness={0.4}
           metalness={0.0}
