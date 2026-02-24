@@ -26,6 +26,10 @@ interface TranslationStrings {
     rings: string;
     seeRings: string;
     hideRings: string;
+    aboutAuraRings: string;
+    infoTitle: string;
+    infoBullets: string[];
+    close: string;
   };
   world: {
     connecting: string;
@@ -77,6 +81,19 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       rings: 'rings',
       seeRings: 'See rings',
       hideRings: 'Hide rings',
+      aboutAuraRings: 'How It Works',
+      infoTitle: 'Spheres – How It Works',
+      infoBullets: [
+        'Every sphere represents a real person who is currently online.',
+        'Your Aura reflects how you currently feel.',
+        'Karma Rings reflect how others experienced conversations with you.',
+        'Fly close to another sphere to request contact.',
+        'The other sphere must accept to start a chat.',
+        'After the conversation, both participants rate the experience.',
+        'No chat history is stored.',
+        'Your identity is never shown.',
+      ],
+      close: 'Close',
     },
     world: {
       connecting: 'Connecting to world...',
@@ -126,6 +143,19 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       rings: 'טבעות',
       seeRings: 'הצג טבעות',
       hideRings: 'הסתר טבעות',
+      aboutAuraRings: 'איך זה עובד',
+      infoTitle: 'ספירות – איך זה עובד',
+      infoBullets: [
+        'כל ספירה מייצגת אדם אמיתי שמחובר כרגע.',
+        'האווירה שלך משקפת איך אתה מרגיש כרגע.',
+        'טבעות הקרמה משקפות איך אחרים חוו שיחות איתך.',
+        'עוף קרוב לספירה אחרת כדי לבקש ליצור קשר.',
+        'הספירה השנייה צריכה לאשר כדי להתחיל צ\'אט.',
+        'אחרי השיחה, שני המשתתפים מדרגים את החוויה.',
+        'היסטוריית הצ\'אט אינה נשמרת.',
+        'הזהות שלך לא מוצגת לעולם.',
+      ],
+      close: 'סגור',
     },
     world: {
       connecting: '...מתחבר לעולם',
@@ -175,6 +205,19 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       rings: 'колец',
       seeRings: 'Показать кольца',
       hideRings: 'Скрыть кольца',
+      aboutAuraRings: 'Как это работает',
+      infoTitle: 'Сферы – Как это работает',
+      infoBullets: [
+        'Каждая сфера — это реальный человек, который сейчас в сети.',
+        'Аура отражает то, как вы сейчас себя чувствуете.',
+        'Кольца кармы отражают, как другие оценили разговоры с вами.',
+        'Подлетьте к другой сфере, чтобы предложить контакт.',
+        'Cфера должна принять запрос, чтобы начать чат.',
+        'После разговора оба участника оценивают опыт.',
+        'История чатов не сохраняется.',
+        'Ваша личность никогда не раскрывается.',
+      ],
+      close: 'Закрыть',
     },
     world: {
       connecting: 'Подключение к миру...',

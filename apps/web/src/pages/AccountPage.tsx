@@ -16,12 +16,22 @@ export default function AccountPage() {
   const navigate = useNavigate();
 
   const [showRings, setShowRings] = useState(false);
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
 
   useEffect(() => {
     if (user && !profile) {
       loadProfile(user.uid, user.email || '');
     }
   }, [user, profile, loadProfile]);
+
+  useEffect(() => {
+    if (!showInfoPopup) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowInfoPopup(false);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showInfoPopup]);
 
   if (loading || !profile) {
     return (
@@ -58,16 +68,52 @@ export default function AccountPage() {
             <div className="core-bar-fill" style={{ width: `${ringsPercent}%` }} />
             <span className="core-bar-label">{ringCount} {t.account.rings}</span>
           </div>
-          <div style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ marginTop: '0.5rem', width: '100%', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <button
             type="button"
             className="btn btn-secondary"
+            style={{ width: '100%' }}
             onClick={() => setShowRings((v) => !v)}
           >
             {showRings ? t.account.hideRings : t.account.seeRings}
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ width: '100%', fontSize: '0.9rem', opacity: 0.9 }}
+            onClick={() => setShowInfoPopup(true)}
+          >
+            {t.account.aboutAuraRings}
+          </button>
           </div>
         </div>
+
+        {showInfoPopup && (
+          <div
+            className="info-popup-overlay"
+            onClick={() => setShowInfoPopup(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.account.infoTitle}
+          >
+            <div className="info-popup-panel" onClick={(e) => e.stopPropagation()}>
+              <h2 className="info-popup-title">{t.account.infoTitle}</h2>
+              <ul className="info-popup-list">
+                {t.account.infoBullets.map((text, i) => (
+                  <li key={i} className="info-popup-p">{text}</li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: '100%', marginTop: '1rem' }}
+                onClick={() => setShowInfoPopup(false)}
+              >
+                {t.account.close}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
           <button
