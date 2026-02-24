@@ -52,7 +52,7 @@ void main() {
 }`;
 
 function Sphere({ aura, coreValue, showRings }: { aura: AuraType; coreValue: number; showRings: boolean }) {
-  const coreRef = useRef<THREE.Mesh>(null!);
+  const sphereGroupRef = useRef<THREE.Group>(null!);
   const auraColor = AURA_COLORS[aura];
   const ringCount = coreValueToRingCount(coreValue);
   const ringsColor = auraToRingsColor(auraColor);
@@ -116,12 +116,12 @@ function Sphere({ aura, coreValue, showRings }: { aura: AuraType; coreValue: num
   }, [auraColor, glowMats]);
 
   useFrame(() => {
-    if (coreRef.current && !showRings) coreRef.current.rotation.y += 0.003;
-  });
+    if (sphereGroupRef.current) sphereGroupRef.current.rotation.y += 0.003;  });
 
   return (
     <group>
-      <mesh ref={coreRef} renderOrder={0}>
+        <group ref={sphereGroupRef}>
+        <mesh renderOrder={0}>
         <sphereGeometry args={[1, 64, 64]} />
         <meshStandardMaterial
           color={auraColor}
@@ -132,6 +132,7 @@ function Sphere({ aura, coreValue, showRings }: { aura: AuraType; coreValue: num
           toneMapped={false}
         />
       </mesh>
+      </group>
 
       {PREVIEW_GLOW.map((layer, i) => (
         <mesh key={i} scale={layer.scale} material={glowMats[i]} renderOrder={1}>
