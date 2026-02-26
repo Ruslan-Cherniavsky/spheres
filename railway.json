@@ -2,7 +2,6 @@
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
     "builder": "NIXPACKS",
-    "buildCommand": "pnpm --filter @spheres/shared build && pnpm --filter @spheres/world-server build",
     "nixpacksPlan": {
       "phases": {
         "setup": {
@@ -15,6 +14,6 @@
     }
   },
   "deploy": {
-    "startCommand": "cd apps/world-server && node dist/index.js"
+    "startCommand": "cd apps/world-server && npx tsx src/index.ts"
   }
 }
