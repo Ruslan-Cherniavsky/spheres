@@ -1,6 +1,6 @@
 {
   "buildCommand": "pnpm -w run build:web",
-  "outputDirectory": "apps/web/dist",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/(.*)",
