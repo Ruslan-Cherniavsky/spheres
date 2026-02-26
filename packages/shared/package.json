@@ -8,12 +8,11 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "default": "./src/index.ts"
+      "import": "./dist/index.js"
     }
   },
   "scripts": {
-    "dev": "tsc --watch --noEmit",
+    "dev": "tsc --watch",
     "build": "tsc"
   },
   "devDependencies": {
