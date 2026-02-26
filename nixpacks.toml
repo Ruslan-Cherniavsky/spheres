@@ -1,6 +1,11 @@
-# Use pnpm instead of npm (workspace:* protocol requires pnpm)
 [phases.setup]
 nixPkgs = ["nodejs_22", "pnpm"]
 
 [phases.install]
 cmds = ["pnpm install"]
+
+[phases.build]
+cmds = ["pnpm --filter @spheres/world-server build"]
+
+[start]
+cmd = "cd apps/world-server && node dist/index.js"
