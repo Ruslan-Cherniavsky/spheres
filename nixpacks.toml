@@ -5,7 +5,7 @@ nixPkgs = ["nodejs_22", "pnpm"]
 cmds = ["pnpm install"]
 
 [phases.build]
-cmds = ["pnpm --filter @spheres/world-server build"]
+cmds = ["pnpm --filter @spheres/shared build", "pnpm --filter @spheres/world-server build"]
 
 [start]
 cmd = "cd apps/world-server && node dist/index.js"
