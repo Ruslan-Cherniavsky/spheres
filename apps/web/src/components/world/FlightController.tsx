@@ -81,9 +81,16 @@ export default function FlightController({
     [aura],
   );
 
+  const trailLine = useMemo(() => {
+    const mat = new THREE.LineBasicMaterial({ color: trailColor, transparent: true, opacity: 0.4, depthWrite: false });
+    const line = new THREE.Line(trailData.geo, mat);
+    line.frustumCulled = false;
+    return line;
+  }, [trailData, trailColor]);
+
   useEffect(() => {
-    return () => { trailData.geo.dispose(); };
-  }, [trailData]);
+    return () => { trailData.geo.dispose(); trailLine.material.dispose(); };
+  }, [trailData, trailLine]);
 
   // ── Keyboard ────────────────────────────
 
@@ -294,15 +301,7 @@ export default function FlightController({
   return (
     <>
       {/* Trail — world-space line, outside the moving group */}
-      <line geometry={trailData.geo} frustumCulled={false}>
-        {/* @ts-ignore — R3F line element */}
-        <lineBasicMaterial
-          color={trailColor}
-          transparent
-          opacity={0.4}
-          depthWrite={false}
-        />
-      </line>
+      <primitive object={trailLine} />
 
       <group ref={groupRef}>
         <PlayerSphere aura={aura} coreValue={coreValue} speed={currentSpeed.current} emitLight />

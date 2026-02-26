@@ -10,7 +10,7 @@ export default function RatingOverlay() {
   const submitRating = useWorldStore((s) => s.submitRating);
   const skipRating = useWorldStore((s) => s.skipRating);
   const language = useUserStore((s) => s.language);
-  const t = useTranslation(language);
+  const t = useTranslation();
 
   const [selected, setSelected] = useState<number | null>(null);
 

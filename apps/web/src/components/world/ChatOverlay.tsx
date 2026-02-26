@@ -11,7 +11,7 @@ export default function ChatOverlay() {
   const endChat = useWorldStore((s) => s.endChat);
   const reportUser = useWorldStore((s) => s.reportUser);
   const language = useUserStore((s) => s.language);
-  const t = useTranslation(language);
+  const t = useTranslation();
 
   const [input, setInput] = useState('');
   const [reported, setReported] = useState(false);
