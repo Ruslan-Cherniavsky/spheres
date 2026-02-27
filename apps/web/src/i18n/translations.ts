@@ -119,14 +119,25 @@ Spheres removes everything that creates bias.
 Each sphere has two layers:
 
 **Aura** — reflects the current inner state.
-It is not a rating or a label. It is an honest "now" signal.
+It is not a rating and not a label. It is an honest signal of “now.”
 
-**Karma rings** — form only after a real dialogue.
-They are not visible from afar, do not create hierarchies, and reflect not personality,
-but the quality of interaction.
+It does not explain or justify — it simply exists.
+If you are struggling, someone may move closer.
+If there is light within you, it can be shared.
 
-Here what matters is not who you are,
-but how you are in contact.
+Aura does not ask for attention —
+it simply makes a state visible.
+
+**Karma rings** — arise only after a dialogue has been completed, when both sides consciously end the contact and leave a mutual reaction. They do not emerge from observation, only from lived experience.
+
+Each sphere begins in a neutral state. After every interaction, the number of rings changes depending on the reaction left: a warm response strengthens them, a cold one weakens them. In this way, the space gradually remembers not words, but the quality of the encounter.
+
+They are not visible from afar, do not create hierarchies, and do not reflect personality.
+They do not say who you are.
+They preserve only the trace of what contact with you was like.
+
+Here, what matters is not who you are,
+but who you become in the presence of another.
 
 ---
 
@@ -258,14 +269,26 @@ but consciousnesses do.`,
 לכל ספירה יש שתי שכבות:
 
 **אאורה** — משקפת את המצב הפנימי הנוכחי.
-זו לא הערכה ולא תווית. זהו אות כנה של "עכשיו".
+זו אינה הערכה ואינה תווית. זהו אות כנה של "עכשיו".
 
-**טבעות קרמה** — נוצרות רק לאחר דיאלוג אמיתי.
-הן אינן נראות מרחוק, אינן יוצרות היררכיות ואינן משקפות אישיות,
-אלא את איכות האינטראקציה.
+היא אינה מסבירה ואינה מצדיקָה — היא פשוט קיימת.
+אם לך קשה, מישהו יכול להתקרב.
+אם יש בתוכך אור — ניתן לחלוק אותו.
 
-כאן מה שחשוב הוא לא מי אתה,
-אלא איך אתה במגע.
+האאורה אינה מבקשת תשומת לב —
+היא רק הופכת את המצב לנראה.
+
+
+**טבעות קרמה** — נולדות רק לאחר השלמת דיאלוג, כאשר שני הצדדים מסיימים את המפגש במודעות ומשאירים תגובה הדדית. הן אינן נוצרות מתוך התבוננות, אלא מתוך חוויה משותפת.
+
+כל ספירה מתחילה במצב ניטרלי. לאחר כל אינטראקציה מספר הטבעות משתנה בהתאם לתגובה שהושארה: תגובה חמה מחזקת אותן, תגובה קרה מחלישה אותן. כך המרחב זוכר בהדרגה לא את המילים, אלא את איכות המפגש.
+
+הן אינן נראות מרחוק, אינן יוצרות היררכיות ואינן משקפות אישיות.
+הן אינן אומרות מי אתה.
+הן שומרות רק את העקבות של המגע איתך.
+
+כאן לא חשוב מי אתה,
+אלא מי אתה נעשה בנוכחות האחר.
 
 ---
 
@@ -397,14 +420,25 @@ Spheres убирает всё, что создаёт предвзятость.
 Каждая сфера имеет два слоя:
 
 **Аура** — отражает текущее внутреннее состояние.
-Это не оценка и не ярлык. Это честный сигнал "сейчас".
+Это не оценка и не ярлык. Это честный сигнал «сейчас».
 
-**Кольца кармы** — формируются только после реального диалога.
-Они не видны издалека, не создают иерархии и отражают не личность,
-а качество взаимодействия.
+Она не объясняет и не оправдывает — она просто присутствует.
+Если тебе тяжело, кто-то может приблизиться.
+Если внутри светло — этим можно поделиться.
+
+Аура не просит внимания,
+она лишь делает состояние видимым.
+
+**Кольца кармы** — Кольца рождаются только после завершённого диалога — когда обе стороны осознанно завершают контакт и оставляют взаимную реакцию. Они не возникают из наблюдения, только из пережитого опыта.
+
+Изначально каждая сфера находится в нейтральном состоянии. После каждого общения число колец меняется в зависимости от оставленной реакции: тёплый отклик усиливает их, холодный — ослабляет. Так пространство постепенно запоминает не слова, а качество встречи.
+
+Они не видны издалека, не создают иерархий и не отражают личность.
+Они не говорят, кто ты.
+Они лишь сохраняют след того, каким был контакт с тобой.
 
 Здесь важно не то, кто ты,
-а то, каким ты бываешь в контакте.
+а то, каким ты становишься в присутствии другого.
 
 ---
 
