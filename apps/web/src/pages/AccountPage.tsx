@@ -17,6 +17,7 @@ export default function AccountPage() {
 
   const [showRings, setShowRings] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [showAboutPopup, setShowAboutPopup] = useState(false);
 
   useEffect(() => {
     if (user && !profile) {
@@ -25,13 +26,16 @@ export default function AccountPage() {
   }, [user, profile, loadProfile]);
 
   useEffect(() => {
-    if (!showInfoPopup) return;
+    if (!showInfoPopup && !showAboutPopup) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setShowInfoPopup(false);
+      if (e.key === 'Escape') {
+        setShowInfoPopup(false);
+        setShowAboutPopup(false);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showInfoPopup]);
+  }, [showInfoPopup, showAboutPopup]);
 
   if (loading || !profile) {
     return (
@@ -57,7 +61,7 @@ export default function AccountPage() {
           <LanguageSelector current={language} onChange={setLanguage} />
         </div>
 
-        <div className="setting-group">
+        <div className="setting-group setting-group--aura">
           <label className="setting-label">{t.account.aura}</label>
           <AuraPicker current={aura} language={language} onChange={setAura} />
         </div>
@@ -85,6 +89,14 @@ export default function AccountPage() {
           >
             {t.account.aboutAuraRings}
           </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ width: '100%', fontSize: '0.9rem', opacity: 0.9 }}
+            onClick={() => setShowAboutPopup(true)}
+          >
+            {t.account.aboutSpheres}
+          </button>
           </div>
         </div>
 
@@ -108,6 +120,60 @@ export default function AccountPage() {
                 className="btn btn-secondary"
                 style={{ width: '100%', marginTop: '1rem' }}
                 onClick={() => setShowInfoPopup(false)}
+              >
+                {t.account.close}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showAboutPopup && (
+          <div
+            className="info-popup-overlay"
+            onClick={() => setShowAboutPopup(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={t.account.aboutSpheres}
+          >
+            <div className="info-popup-panel info-popup-panel--wide" onClick={(e) => e.stopPropagation()}>
+              <h2 className="info-popup-title">{t.account.aboutSpheres}</h2>
+              <div className="info-popup-about">
+                {t.account.aboutSpheresContent.split(/\n\n+/).map((block, i) => {
+                  const t2 = block.trim();
+                  if (!t2) return null;
+                  if (t2.startsWith('## ')) {
+                    return <h3 key={i} className="info-popup-h3">{t2.slice(3)}</h3>;
+                  }
+                  if (t2 === '---') return <hr key={i} className="info-popup-hr" />;
+                  if (t2.startsWith('- ')) {
+                    const items = t2.split('\n').filter((l) => l.startsWith('- '));
+                    return (
+                      <ul key={i} className="info-popup-ul">
+                        {items.map((item, j) => (
+                          <li key={j}>{item.slice(2)}</li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                  const parts = t2.split(/(\*\*.+?\*\*)/g);
+                  return (
+                    <p key={i} className="info-popup-para">
+                      {parts.map((part, j) =>
+                        part.startsWith('**') && part.endsWith('**') ? (
+                          <strong key={j}>{part.slice(2, -2)}</strong>
+                        ) : (
+                          part
+                        )
+                      )}
+                    </p>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                style={{ width: '100%', marginTop: '1rem' }}
+                onClick={() => setShowAboutPopup(false)}
               >
                 {t.account.close}
               </button>

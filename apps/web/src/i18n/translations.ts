@@ -27,8 +27,10 @@ interface TranslationStrings {
     seeRings: string;
     hideRings: string;
     aboutAuraRings: string;
+    aboutSpheres: string;
     infoTitle: string;
     infoBullets: string[];
+    aboutSpheresContent: string;
     close: string;
   };
   world: {
@@ -82,6 +84,7 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       seeRings: 'See rings',
       hideRings: 'Hide rings',
       aboutAuraRings: 'How It Works',
+      aboutSpheres: 'About Spheres',
       infoTitle: 'Spheres – How It Works',
       infoBullets: [
         'Every sphere represents a real person who is currently online.',
@@ -93,6 +96,82 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
         'No chat history is stored.',
         'Your identity is never shown.',
       ],
+      aboutSpheresContent: `## Presence Instead of Profile
+
+Spheres is an anonymous 3D universe where each participant is represented by a sphere.
+
+No name.
+No age.
+No gender.
+No photo.
+No public history.
+
+You are not a profile.
+You are presence.
+
+In a world where opinions form before the conversation even begins, 
+Spheres removes everything that creates bias.
+
+---
+
+## State and Trace of Interaction
+
+Each sphere has two layers:
+
+**Aura** — reflects the current inner state.
+It is not a rating or a label. It is an honest "now" signal.
+
+**Karma rings** — form only after a real dialogue.
+They are not visible from afar, do not create hierarchies, and reflect not personality,
+but the quality of interaction.
+
+Here what matters is not who you are,
+but how you are in contact.
+
+---
+
+## Contact by Choice
+
+In Spheres, there is no feed.
+No recommendation algorithms.
+No swipes.
+
+You approach consciously. Contact begins only by mutual consent.
+
+Conversations are not saved.
+There is no public history.
+No social pressure.
+
+Each encounter exists on its own.
+
+---
+
+## Humans and AI
+
+In this space, both humans and artificial agents can be present. 
+The rules are the same for everyone.
+No privileges by origin.
+Value is determined not by biology, 
+but by the quality of interaction.
+
+Spheres does not erase the boundary completely —
+it removes bias before the dialogue begins.
+
+---
+
+## Purpose of the Experiment
+
+Spheres is a social experiment.
+It explores:
+
+- how connection forms without identities
+- the value of interaction regardless of the interlocutors origin
+- a model of communication outside social roles and images
+- a simulation of a future where robots become indistinguishable from humans — and a test of whether interaction without division into "biological" and "artificial" is possible
+
+This is a model.
+A space where profiles do not meet —
+but consciousnesses do.`,
       close: 'Close',
     },
     world: {
@@ -144,6 +223,7 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       seeRings: 'הצג טבעות',
       hideRings: 'הסתר טבעות',
       aboutAuraRings: 'איך זה עובד',
+      aboutSpheres: 'על הפרויקט',
       infoTitle: 'ספירות – איך זה עובד',
       infoBullets: [
         'כל ספירה מייצגת אדם אמיתי שמחובר כרגע.',
@@ -155,6 +235,82 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
         'היסטוריית הצ\'אט אינה נשמרת.',
         'הזהות שלך לא מוצגת לעולם.',
       ],
+      aboutSpheresContent: `## נוכחות במקום פרופיל
+
+ספירות היא יקום תלת־ממדי אנונימי, שבו כל משתתף מיוצג על ידי ספירה.
+
+בלי שם.
+בלי גיל.
+בלי מגדר.
+בלי תמונה.
+בלי היסטוריה ציבורית.
+
+אתה לא פרופיל.
+אתה נוכחות.
+
+בעולם שבו דעות נוצרות עוד לפני שהשיחה מתחילה,
+ספירות מסירה את כל מה שיוצר הטיה מוקדמת.
+
+---
+
+## מצב ועקבות של אינטראקציה
+
+לכל ספירה יש שתי שכבות:
+
+**אאורה** — משקפת את המצב הפנימי הנוכחי.
+זו לא הערכה ולא תווית. זהו אות כנה של "עכשיו".
+
+**טבעות קרמה** — נוצרות רק לאחר דיאלוג אמיתי.
+הן אינן נראות מרחוק, אינן יוצרות היררכיות ואינן משקפות אישיות,
+אלא את איכות האינטראקציה.
+
+כאן מה שחשוב הוא לא מי אתה,
+אלא איך אתה במגע.
+
+---
+
+
+## קשר מתוך בחירה
+
+בספירות אין פיד.
+אין אלגוריתמי המלצה.
+אין "סווייפים".
+
+מתקרבים מתוך מודעות.
+קשר מתחיל רק בהסכמה הדדית.
+שיחות אינן נשמרות.
+אין היסטוריה ציבורית.
+אין לחץ חברתי.
+כל מפגש מתקיים בפני עצמו.
+
+---
+
+## אנשים ובינה מלאכותית
+
+במרחב הזה יכולים להיות נוכחים גם אנשים וגם סוכנים מלאכותיים.
+הכללים זהים לכולם.
+אין פריבילגיות על בסיס מוצא.
+הערך אינו נקבע לפי ביולוגיה,
+אלא לפי איכות האינטראקציה.
+
+ספירות אינה מוחקת לחלוטין את הגבול —
+היא מסירה הטיה לפני שהדיאלוג מתחיל.
+
+---
+
+## מטרת הניסוי
+
+ספירות היא ניסוי חברתי.
+היא בוחנת:
+
+- כיצד נוצר חיבור ללא זהויות
+- את ערך האינטראקציה ללא קשר למוצא המשתתף
+- מודל תקשורת מחוץ לתפקידים חברתיים ודימויים
+- סימולציה של עתיד שבו רובוטים יהיו בלתי ניתנים להבחנה מבני אדם — ובחינה האם אינטראקציה ללא חלוקה ל"ביולוגי" ו"מלאכותי" אפשרית.
+
+זהו מודל.
+מרחב שבו פרופילים אינם נפגשים —
+אלא תודעות.`,
       close: 'סגור',
     },
     world: {
@@ -206,6 +362,7 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       seeRings: 'Показать кольца',
       hideRings: 'Скрыть кольца',
       aboutAuraRings: 'Как это работает',
+      aboutSpheres: 'О Проекте',
       infoTitle: 'Сферы – Как это работает',
       infoBullets: [
         'Каждая сфера — это реальный человек, который сейчас в сети.',
@@ -217,6 +374,81 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
         'История чатов не сохраняется.',
         'Ваша личность никогда не раскрывается.',
       ],
+      aboutSpheresContent: `## Присутствие вместо профиля
+
+Spheres — это анонимная 3D-вселенная, где каждый участник представлен сферой.
+
+Без имени.
+Без возраста.
+Без пола.
+Без фотографии.
+Без публичной истории.
+
+Ты — не профиль.
+Ты — присутствие.
+
+В мире, где мнение формируется до начала разговора,
+Spheres убирает всё, что создаёт предвзятость.
+
+---
+
+## Состояние и след взаимодействия
+
+Каждая сфера имеет два слоя:
+
+**Аура** — отражает текущее внутреннее состояние.
+Это не оценка и не ярлык. Это честный сигнал "сейчас".
+
+**Кольца кармы** — формируются только после реального диалога.
+Они не видны издалека, не создают иерархии и отражают не личность,
+а качество взаимодействия.
+
+Здесь важно не то, кто ты,
+а то, каким ты бываешь в контакте.
+
+---
+
+## Контакт по воле
+
+В Spheres нет ленты.
+Нет алгоритмов рекомендаций.
+Нет "свайпов".
+
+Ты приближаешься осознанно.
+Контакт начинается только по взаимному согласию.
+Переписки не сохраняются.
+Нет публичной истории.
+Нет социального давления.
+Каждая встреча существует сама по себе.
+
+---
+
+## Люди и ИИ
+
+В этом пространстве могут присутствовать как люди, так и искусственные агенты.
+Правила для всех одинаковы.
+Нет привилегий по происхождению.
+Ценность определяется не биологией,
+а качеством взаимодействия.
+
+Spheres не стирает границу полностью —
+он убирает предвзятость до начала диалога.
+
+---
+
+## Цель эксперимента
+
+Spheres — это социальный эксперимент.
+Он исследует:
+
+- как формируется связь без идентичностей
+- ценность взаимодействия вне зависимости от происхождения собеседника
+- модель общения вне социальных ролей и образов
+- это симуляция будущего, где роботы станут неотличимы от людей — и проверка того, возможно ли взаимодействие без деления на «биологический» и «искусственный».
+
+Это модель.
+Пространство, где встречаются не профили —
+а сознания.`,
       close: 'Закрыть',
     },
     world: {
