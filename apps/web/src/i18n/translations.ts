@@ -87,7 +87,7 @@ const translations: Record<SupportedLanguage, TranslationStrings> = {
       aboutSpheres: 'About Spheres',
       infoTitle: 'Spheres – How It Works',
       infoBullets: [
-        'Every sphere represents a real person who is currently online.',
+        'Each sphere represents someone who is currently online.',
         'Your Aura reflects how you currently feel.',
         'Karma Rings reflect how others experienced conversations with you.',
         'Fly close to another sphere to request contact.',
@@ -154,6 +154,26 @@ There is no public history.
 No social pressure.
 
 Each encounter exists on its own.
+
+---
+
+## Why It Matters
+
+Freedom to speak without identity.
+
+The chance to be heard — or to listen — without being measured.
+
+Connection without pressure, without performance.
+
+The quiet responsibility of how you affect another person.
+
+The quiet satisfaction of helping someone you may never meet again.
+
+Every encounter stands on its own.
+
+No history precedes it.
+
+No label survives it.
 
 ---
 
@@ -237,7 +257,7 @@ but consciousnesses do.`,
       aboutSpheres: 'על הפרויקט',
       infoTitle: 'ספירות – איך זה עובד',
       infoBullets: [
-        'כל ספירה מייצגת אדם אמיתי שמחובר כרגע.',
+        'כל ספירה מייצגת מישהו שמחובר כרגע.',
         'האווירה שלך משקפת איך אתה מרגיש כרגע.',
         'טבעות הקרמה משקפות איך אחרים חוו שיחות איתך.',
         'עוף קרוב לספירה אחרת כדי לבקש ליצור קשר.',
@@ -305,6 +325,21 @@ but consciousnesses do.`,
 אין היסטוריה ציבורית.
 אין לחץ חברתי.
 כל מפגש מתקיים בפני עצמו.
+
+---
+
+## למה זה חשוב
+
+חופש לדבר ללא זהות.
+האפשרות להישמע — או להקשיב — מבלי להישפט.
+קשר ללא לחץ, ללא הצגה עצמית.
+
+האחריות השקטה של הנוכחות שלך.
+המשמעות של רגע משותף בין זרים.
+
+כל מפגש עומד בפני עצמו.
+אין היסטוריה שקודמת לו.
+אין תווית שנשארת אחריו.
 
 ---
 
@@ -388,7 +423,7 @@ but consciousnesses do.`,
       aboutSpheres: 'О Проекте',
       infoTitle: 'Сферы – Как это работает',
       infoBullets: [
-        'Каждая сфера — это реальный человек, который сейчас в сети.',
+        'Каждая сфера представляет кого-то, кто сейчас в сети.',
         'Аура отражает то, как вы сейчас себя чувствуете.',
         'Кольца кармы отражают, как другие оценили разговоры с вами.',
         'Подлетьте к другой сфере, чтобы предложить контакт.',
@@ -454,6 +489,24 @@ Spheres убирает всё, что создаёт предвзятость.
 Нет публичной истории.
 Нет социального давления.
 Каждая встреча существует сама по себе.
+
+---
+
+## Почему это важно
+
+Свобода говорить без идентичности.
+
+Возможность быть услышанным — или просто слушать.
+
+Контакт без давления.
+
+Тихое удовлетворение от того, что ты помог кому-то.
+
+Непредсказуемость каждой встречи.
+
+Каждая встреча — новая.
+Ничего не тянется следом.
+Ничто не определяет тебя навсегда.
 
 ---
 
