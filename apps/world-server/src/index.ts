@@ -71,6 +71,18 @@ io.on('connection', (socket) => {
       const decoded = await verifyToken(token);
       const uid = decoded.uid;
 
+      // Kick previous session if same user is already connected
+      for (const [oldSocketId, oldMeta] of socketMeta) {
+        if (oldMeta.uid === uid && oldSocketId !== socket.id) {
+          const oldSock = io.sockets.sockets.get(oldSocketId);
+          if (oldSock) {
+            oldSock.emit('error', { message: 'Logged in from another location', code: 'DUPLICATE_SESSION' });
+            oldSock.disconnect(true);
+          }
+          handleLeave(oldSock ?? socket, oldSocketId);
+        }
+      }
+
       socket.join(worldId);
       socketMeta.set(socket.id, { worldId, uid });
 
@@ -296,8 +308,9 @@ io.on('connection', (socket) => {
   });
 });
 
-function handleLeave(socket: import('socket.io').Socket) {
-  const meta = socketMeta.get(socket.id);
+function handleLeave(socket: import('socket.io').Socket, socketIdOverride?: string) {
+  const sid = socketIdOverride ?? socket.id;
+  const meta = socketMeta.get(sid);
   if (!meta) return;
 
   // If player was chatting/requesting, reset the other party
@@ -330,7 +343,7 @@ function handleLeave(socket: import('socket.io').Socket) {
 
   worldManager.removePlayer(meta.worldId, meta.uid);
   socket.to(meta.worldId).emit('player_left', { uid: meta.uid });
-  socketMeta.delete(socket.id);
+  socketMeta.delete(sid);
   console.log(`[ws] ${meta.uid} left ${meta.worldId}`);
 }
 

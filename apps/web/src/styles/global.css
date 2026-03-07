@@ -572,6 +572,44 @@ button {
   min-width: 90px;
 }
 
+/* ── Kicked overlay ────────────────────── */
+
+.kicked-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+}
+
+.kicked-panel {
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  padding: 2rem 2.5rem;
+  text-align: center;
+  min-width: 280px;
+  max-width: 360px;
+  box-shadow: 0 0 40px rgba(74, 144, 217, 0.25);
+}
+
+.kicked-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.kicked-message {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
 /* ── Chat overlay ──────────────────────── */
 
 .chat-overlay {

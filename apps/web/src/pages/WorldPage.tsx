@@ -19,7 +19,7 @@ import RatingFeedback from '../components/world/RatingFeedback';
 export default function WorldPage() {
   const user = useAuthStore((s) => s.user);
   const { aura, coreValue, language, setAura } = useUserStore();
-  const { connected, remotePlayers, connect, disconnect, nearestPlayer, contactTargetUid } = useWorldStore();
+  const { connected, remotePlayers, connect, disconnect, nearestPlayer, contactTargetUid, kickedMessage } = useWorldStore();
   const navigate = useNavigate();
   const [pointerLocked, setPointerLocked] = useState(false);
   const playerPosRef = useRef(new THREE.Vector3());
@@ -103,6 +103,18 @@ export default function WorldPage() {
       <ChatOverlay />
       <RatingOverlay />
       <RatingFeedback />
+
+      {kickedMessage && (
+        <div className="kicked-overlay">
+          <div className="kicked-panel">
+            <p className="kicked-title">Session Ended</p>
+            <p className="kicked-message">{kickedMessage}</p>
+            <button className="btn btn-primary" onClick={() => navigate('/account')}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

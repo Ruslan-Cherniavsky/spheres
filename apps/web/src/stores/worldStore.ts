@@ -42,6 +42,9 @@ interface WorldStore {
   // Rating feedback
   ratingFeedback: { value: number; timestamp: number } | null;
 
+  // Kicked state
+  kickedMessage: string | null;
+
   connect: (token: string, uid: string) => void;
   disconnect: () => void;
   sendPositionUpdate: (
@@ -75,13 +78,14 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   chatMessages: [],
   chatMessageCount: 0,
   ratingFeedback: null,
+  kickedMessage: null,
 
   connect: (token, uid) => {
     const existing = get().socket;
     if (existing) existing.disconnect();
 
     const socket = createSocket(token);
-    set({ socket, myUid: uid });
+    set({ socket, myUid: uid, kickedMessage: null });
 
     socket.on('connect', () => {
       socket.emit('join_world', {
@@ -234,8 +238,12 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       }, 3000);
     });
 
-    socket.on('error', ({ message }) => {
+    socket.on('error', ({ message, code }) => {
       console.error('[socket] error:', message);
+      if (code === 'DUPLICATE_SESSION') {
+        set({ kickedMessage: message, connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
+        return;
+      }
       const { contactState } = get();
       if (contactState === 'outgoing' || contactState === 'incoming') {
         set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
