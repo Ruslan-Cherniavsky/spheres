@@ -37,7 +37,26 @@ interface TranslationStrings {
     connecting: string;
     connected: string;
     disconnected: string;
+    offline: string;
     changeAura: string;
+    back: string;
+    hintFlying: string;
+    hintChatting: string;
+    hintLocked: string;
+    contact: {
+      pressE: string;
+      btn: string;
+      cooldown: string;
+      requesting: string;
+      incomingTitle: string;
+      accept: string;
+      decline: string;
+    };
+    kicked: {
+      title: string;
+      body: string;
+      ok: string;
+    };
   };
   chat: {
     placeholder: string;
@@ -52,8 +71,11 @@ interface TranslationStrings {
     skip: string;
     submit: string;
     labels: [string, string, string, string, string];
-  };
-}
+    rateBlockedTitle: string;
+    rateBlockedBody: string;
+    rateBlockedTimer: string;
+    received: string;
+  }
 
 const translations: Record<SupportedLanguage, TranslationStrings> = {
   en: {
@@ -210,6 +232,24 @@ but consciousnesses do.`,
       connected: 'Connected',
       disconnected: 'Disconnected',
       changeAura: 'Change Aura',
+      back: '← Back',
+      hintFlying: 'WASD move · Mouse look · Shift boost · E contact · ESC menu',
+      hintChatting: 'Type to chat · ESC menu',
+      hintLocked: 'Click to fly',
+      contact: {
+        pressE: 'Press E to Contact',
+        btn: 'Contact',
+        cooldown: 'Cooldown {seconds}s',
+        requesting: 'Requesting contact...',
+        incomingTitle: 'Contact Request',
+        accept: 'Accept',
+        decline: 'Decline',
+      },
+      kicked: {
+        title: 'Session Ended',
+        body: 'You have been logged in from another location.',
+        ok: 'OK',
+      },
     },
     chat: {
       placeholder: 'Type a message...',
@@ -224,9 +264,10 @@ but consciousnesses do.`,
       skip: 'Skip',
       submit: 'Submit',
       labels: ['Toxic', 'Negative', 'Neutral', 'Positive', 'Inspiring'],
-    },
-  },
-  he: {
+      rateBlockedTitle: 'Rating on cooldown',
+      rateBlockedBody: 'You have already rated this user.',
+      rateBlockedTimer: 'You can rate again in {time}',
+      received: 'received', {
     app: { title: 'SPHERES' },
     auth: {
       signIn: 'התחברות',
@@ -376,6 +417,24 @@ but consciousnesses do.`,
       connected: 'מחובר',
       disconnected: 'מנותק',
       changeAura: 'שנה אווירה',
+      back: '← חזרה',
+      hintFlying: 'WASD תזוזה · עכבר כיוון · Shift האצה · E קשר · ESC תפריט',
+      hintChatting: 'הקלד לשיחה · ESC תפריט',
+      hintLocked: 'לחץ לטוס',
+      contact: {
+        pressE: 'לחץ E לקשר',
+        btn: 'קשר',
+        cooldown: 'המתנה {seconds}ש',
+        requesting: '...מבקש קשר',
+        incomingTitle: 'בקשת קשר',
+        accept: 'אישור',
+        decline: 'דחייה',
+      },
+      kicked: {
+        title: 'הפגישה הסתיימה',
+        body: 'התחברת ממיקום אחר.',
+        ok: 'אישור',
+      },
     },
     chat: {
       placeholder: '...כתוב הודעה',
@@ -390,9 +449,10 @@ but consciousnesses do.`,
       skip: 'דלג',
       submit: 'שלח',
       labels: ['רעיל', 'שלילי', 'ניטרלי', 'חיובי', 'מעורר השראה'],
-    },
-  },
-  ru: {
+      rateBlockedTitle: 'דירוג במצב המתנה',
+      rateBlockedBody: 'כבר דירגת את המשתמש הזה.',
+      rateBlockedTimer: 'תוכל לדרג שוב בעוד {time}',
+      received: 'התקבל',
     app: { title: 'SPHERES' },
     auth: {
       signIn: 'Войти',
@@ -543,6 +603,24 @@ Spheres — это социальный эксперимент.
       connected: 'Подключено',
       disconnected: 'Отключено',
       changeAura: 'Сменить ауру',
+      back: '← Назад',
+      hintFlying: 'WASD движение · Мышь обзор · Shift ускорение · E контакт · ESC меню',
+      hintChatting: 'Печатайте · ESC меню',
+      hintLocked: 'Нажмите для полёта',
+      contact: {
+        pressE: 'Нажмите E для контакта',
+        btn: 'Контакт',
+        cooldown: 'Пауза {seconds}с',
+        requesting: 'Запрос контакта...',
+        incomingTitle: 'Запрос контакта',
+        accept: 'Принять',
+        decline: 'Отклонить',
+      },
+      kicked: {
+        title: 'Сеанс завершён',
+        body: 'Вы вошли с другого устройства.',
+        ok: 'ОК',
+      },
     },
     chat: {
       placeholder: 'Напишите сообщение...',
@@ -557,9 +635,10 @@ Spheres — это социальный эксперимент.
       skip: 'Пропустить',
       submit: 'Отправить',
       labels: ['Токсично', 'Негативно', 'Нейтрально', 'Позитивно', 'Вдохновляюще'],
-    },
-  },
-};
+      rateBlockedTitle: 'Оценка на паузе',
+      rateBlockedBody: 'Вы уже оценили этого пользователя.',
+      rateBlockedTimer: 'Снова оценить можно через {time}',
+      received: 'получено',
 
 export type Translations = TranslationStrings;
 

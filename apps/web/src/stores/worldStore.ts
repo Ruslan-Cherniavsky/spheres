@@ -45,6 +45,10 @@ interface WorldStore {
   // Kicked state
   kickedMessage: string | null;
 
+  // Rate blocked notice
+  rateBlocked: boolean;
+  rateBlockedTimeLeft: string | null;
+
   connect: (token: string, uid: string) => void;
   disconnect: () => void;
   sendPositionUpdate: (
@@ -79,6 +83,8 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   chatMessageCount: 0,
   ratingFeedback: null,
   kickedMessage: null,
+  rateBlocked: false,
+  rateBlockedTimeLeft: null,
 
   connect: (token, uid) => {
     const existing = get().socket;
@@ -204,8 +210,28 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       });
     });
 
-    socket.on('chat_ended', ({ withUid }) => {
+    socket.on('chat_ended', ({ withUid, ratingCooldownUntil }) => {
       const { chatMessageCount } = get();
+      if (ratingCooldownUntil) {
+        const remainMs = ratingCooldownUntil - Date.now();
+        if (remainMs > 0) {
+          const hours = Math.floor(remainMs / 3_600_000);
+          const mins = Math.ceil((remainMs % 3_600_000) / 60_000);
+          const timeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+          set({
+            contactState: 'idle',
+            contactTargetUid: null,
+            incomingFromUid: null,
+            requestStartedAt: null,
+            chatMessages: [],
+            chatMessageCount: 0,
+            rateBlocked: true,
+            rateBlockedTimeLeft: timeStr,
+          });
+          setTimeout(() => set({ rateBlocked: false, rateBlockedTimeLeft: null }), 6000);
+          return;
+        }
+      }
       if (chatMessageCount >= 1) {
         set({ contactState: 'rating', contactTargetUid: withUid, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
       } else {
@@ -236,6 +262,11 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
           set({ ratingFeedback: null });
         }
       }, 3000);
+    });
+
+    socket.on('rate_blocked', () => {
+      set({ rateBlocked: true, rateBlockedTimeLeft: null });
+      setTimeout(() => set({ rateBlocked: false, rateBlockedTimeLeft: null }), 3000);
     });
 
     socket.on('error', ({ message, code }) => {
@@ -321,15 +352,9 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   },
 
   endChat: () => {
-    const { socket, connected, contactState, contactTargetUid, chatMessageCount } = get();
+    const { socket, connected, contactState, contactTargetUid } = get();
     if (!socket || !connected || contactState !== 'chatting' || !contactTargetUid) return;
     socket.emit('end_chat', { withUid: contactTargetUid });
-
-    if (chatMessageCount >= 1) {
-      set({ contactState: 'rating', requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
-    } else {
-      set({ contactState: 'idle', contactTargetUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
-    }
   },
 
   reportUser: () => {

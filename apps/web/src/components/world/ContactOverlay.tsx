@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useWorldStore } from '../../stores/worldStore';
 import { WORLD_CONFIG } from '@spheres/shared';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export default function ContactOverlay() {
   const nearestPlayer = useWorldStore((s) => s.nearestPlayer);
@@ -10,6 +11,8 @@ export default function ContactOverlay() {
   const requestContact = useWorldStore((s) => s.requestContact);
   const respondContact = useWorldStore((s) => s.respondContact);
   const requestStartedAt = useWorldStore((s) => s.requestStartedAt);
+
+  const t = useTranslation();
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -35,7 +38,7 @@ export default function ContactOverlay() {
       {/* Near a sphere + idle + no cooldown */}
       {contactState === 'idle' && nearestPlayer && !isOnCooldown && (
         <div className="contact-prompt">
-          <span className="contact-hint">Press E to Contact</span>
+          <span className="contact-hint">{t.world.contact.pressE}</span>
           <button
             className="hud-btn contact-btn"
             onPointerDown={(e) => {
@@ -43,7 +46,7 @@ export default function ContactOverlay() {
               requestContact(nearestPlayer.uid);
             }}
           >
-            Contact
+            {t.world.contact.btn}
           </button>
         </div>
       )}
@@ -51,7 +54,9 @@ export default function ContactOverlay() {
       {/* Near a sphere + cooldown */}
       {contactState === 'idle' && nearestPlayer && isOnCooldown && (
         <div className="contact-prompt">
-          <span className="contact-cooldown">Cooldown {cooldownLeft}s</span>
+          <span className="contact-cooldown">
+            {t.world.contact.cooldown.replace('{seconds}', String(cooldownLeft))}
+          </span>
         </div>
       )}
 
@@ -59,7 +64,7 @@ export default function ContactOverlay() {
       {contactState === 'outgoing' && (
         <div className="contact-prompt">
           <span className="contact-pending">
-            Requesting contact...
+            {t.world.contact.requesting}
             {timeoutLeft !== null && <span className="contact-timer">{timeoutLeft}s</span>}
           </span>
         </div>
@@ -69,7 +74,7 @@ export default function ContactOverlay() {
       {contactState === 'incoming' && incomingFromUid && (
         <div className="contact-incoming">
           <p className="contact-incoming-title">
-            Contact Request
+            {t.world.contact.incomingTitle}
             {timeoutLeft !== null && <span className="contact-timer">{timeoutLeft}s</span>}
           </p>
           <div className="contact-actions">
@@ -80,7 +85,7 @@ export default function ContactOverlay() {
                 respondContact(incomingFromUid, true);
               }}
             >
-              Accept
+              {t.world.contact.accept}
             </button>
             <button
               className="btn btn-secondary"
@@ -89,7 +94,7 @@ export default function ContactOverlay() {
                 respondContact(incomingFromUid, false);
               }}
             >
-              Decline
+              {t.world.contact.decline}
             </button>
           </div>
         </div>

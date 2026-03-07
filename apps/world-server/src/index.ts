@@ -62,6 +62,52 @@ function clearRequestTimeout(uid1: string, uid2: string) {
   }
 }
 
+// Rating cooldown: "raterUid:targetUid" → timestamp of last rating
+const ratingCooldowns = new Map<string, number>();
+
+function ratingPairKey(raterUid: string, targetUid: string) {
+  return `${raterUid}:${targetUid}`;
+}
+
+async function checkRatingCooldown(raterUid: string, targetUid: string): Promise<boolean> {
+  const key = ratingPairKey(raterUid, targetUid);
+  const now = Date.now();
+
+  const cached = ratingCooldowns.get(key);
+  if (cached && now - cached < CORE_VALUE.ratingCooldownMs) return false;
+
+  try {
+    const db = getFirestore('spheres');
+    const doc = await db.collection('ratingCooldowns').doc(key).get();
+    if (doc.exists) {
+      const lastRated = doc.data()?.timestamp as number;
+      ratingCooldowns.set(key, lastRated);
+      if (now - lastRated < CORE_VALUE.ratingCooldownMs) return false;
+    }
+  } catch (err) {
+    console.error('[rate-cooldown] firestore check failed:', (err as Error).message);
+  }
+
+  return true;
+}
+
+async function recordRating(raterUid: string, targetUid: string) {
+  const key = ratingPairKey(raterUid, targetUid);
+  const now = Date.now();
+  ratingCooldowns.set(key, now);
+
+  try {
+    const db = getFirestore('spheres');
+    await db.collection('ratingCooldowns').doc(key).set({
+      raterUid,
+      targetUid,
+      timestamp: now,
+    });
+  } catch (err) {
+    console.error('[rate-cooldown] firestore write failed:', (err as Error).message);
+  }
+}
+
 io.on('connection', (socket) => {
   console.log(`[ws] connected: ${socket.id}`);
 
@@ -246,7 +292,7 @@ io.on('connection', (socket) => {
   });
 
   // ── End chat ───────────────────────────
-  socket.on('end_chat', ({ withUid }) => {
+  socket.on('end_chat', async ({ withUid }) => {
     const meta = socketMeta.get(socket.id);
     if (!meta) return;
 
@@ -258,7 +304,21 @@ io.on('connection', (socket) => {
 
     if (other && !other.isAI) {
       const otherSock = findSocketByUid(withUid);
-      otherSock?.emit('chat_ended', { withUid: meta.uid });
+
+      const [senderAllowed, receiverAllowed] = await Promise.all([
+        checkRatingCooldown(meta.uid, withUid),
+        checkRatingCooldown(withUid, meta.uid),
+      ]);
+
+      const senderCooldownUntil = senderAllowed ? undefined
+        : (ratingCooldowns.get(ratingPairKey(meta.uid, withUid)) ?? 0) + CORE_VALUE.ratingCooldownMs;
+      const receiverCooldownUntil = receiverAllowed ? undefined
+        : (ratingCooldowns.get(ratingPairKey(withUid, meta.uid)) ?? 0) + CORE_VALUE.ratingCooldownMs;
+
+      socket.emit('chat_ended', { withUid, ratingCooldownUntil: senderCooldownUntil });
+      otherSock?.emit('chat_ended', { withUid: meta.uid, ratingCooldownUntil: receiverCooldownUntil });
+    } else {
+      socket.emit('chat_ended', { withUid });
     }
 
     if (other?.isAI) {
@@ -269,7 +329,7 @@ io.on('connection', (socket) => {
   });
 
   // ── Rate core ──────────────────────────
-  socket.on('rate_core', ({ withUid, value }) => {
+  socket.on('rate_core', async ({ withUid, value }) => {
     const meta = socketMeta.get(socket.id);
     if (!meta) return;
 
@@ -280,6 +340,15 @@ io.on('connection', (socket) => {
     const target = worldManager.getPlayer(meta.worldId, withUid);
     if (!target) return;
 
+    if (!target.isAI) {
+      const allowed = await checkRatingCooldown(meta.uid, withUid);
+      if (!allowed) {
+        socket.emit('rate_blocked', { targetUid: withUid });
+        console.log(`[rate] blocked: ${meta.uid} → ${withUid} (cooldown)`);
+        return;
+      }
+    }
+
     const step = numValue * CORE_VALUE.ratingStep;
     const newCore = Math.max(CORE_VALUE.min, Math.min(CORE_VALUE.max, target.coreValue + step));
     target.coreValue = newCore;
@@ -288,6 +357,7 @@ io.on('connection', (socket) => {
 
     if (!target.isAI) {
       updateCoreInFirestore(withUid, newCore);
+      recordRating(meta.uid, withUid);
     }
 
     console.log(`[rate] ${meta.uid} rated ${withUid}: ${numValue} → core=${newCore.toFixed(3)}`);

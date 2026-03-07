@@ -66,6 +66,7 @@ export const CORE_VALUE = {
   max: 1,
   default: 0,
   ratingStep: 0.05,
+  ratingCooldownMs: 24 * 60 * 60 * 1000,
 } as const;
 
 /**

@@ -15,12 +15,14 @@ import ContactOverlay from '../components/world/ContactOverlay';
 import ChatOverlay from '../components/world/ChatOverlay';
 import RatingOverlay from '../components/world/RatingOverlay';
 import RatingFeedback from '../components/world/RatingFeedback';
+import { useTranslation } from '../i18n/useTranslation';
 
 export default function WorldPage() {
   const user = useAuthStore((s) => s.user);
   const { aura, coreValue, language, setAura } = useUserStore();
   const { connected, remotePlayers, connect, disconnect, nearestPlayer, contactTargetUid, kickedMessage } = useWorldStore();
   const navigate = useNavigate();
+  const t = useTranslation();
   const [pointerLocked, setPointerLocked] = useState(false);
   const playerPosRef = useRef(new THREE.Vector3());
 
@@ -107,10 +109,10 @@ export default function WorldPage() {
       {kickedMessage && (
         <div className="kicked-overlay">
           <div className="kicked-panel">
-            <p className="kicked-title">Session Ended</p>
-            <p className="kicked-message">{kickedMessage}</p>
+            <p className="kicked-title">{t.world.kicked.title}</p>
+            <p className="kicked-message">{t.world.kicked.body}</p>
             <button className="btn btn-primary" onClick={() => navigate('/account')}>
-              OK
+              {t.world.kicked.ok}
             </button>
           </div>
         </div>

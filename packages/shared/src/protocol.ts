@@ -43,8 +43,9 @@ export interface ServerEvents {
     text: string;
     timestamp: number;
   }) => void;
-  chat_ended: (data: { withUid: string }) => void;
+  chat_ended: (data: { withUid: string; ratingCooldownUntil?: number }) => void;
   core_updated: (data: { uid: string; coreValue: number }) => void;
   rating_received: (data: { fromUid: string; value: number; newCoreValue: number }) => void;
+  rate_blocked: (data: { targetUid: string }) => void;
   error: (data: { message: string; code?: string }) => void;
 }

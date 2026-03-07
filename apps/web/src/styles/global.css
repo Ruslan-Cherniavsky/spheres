@@ -1110,6 +1110,58 @@ button {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* ── Rate blocked popup ───────────────── */
+
+.rate-blocked-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10%;
+  pointer-events: none;
+  animation: rate-blocked-fade 7s ease-out forwards;
+}
+
+.rate-blocked-panel {
+  background: rgba(10, 10, 15, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1.5rem 2rem;
+  backdrop-filter: blur(8px);
+  text-align: center;
+  min-width: 260px;
+  max-width: 340px;
+}
+
+.rate-blocked-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.rate-blocked-body {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+  line-height: 1.4;
+}
+
+.rate-blocked-timer {
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-top: 0.3rem;
+}
+
+@keyframes rate-blocked-fade {
+  0% { opacity: 0; }
+  7% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes rating-float {
   0% { opacity: 0; transform: translateX(-50%) translateY(10px); }
   15% { opacity: 1; transform: translateX(-50%) translateY(0); }
