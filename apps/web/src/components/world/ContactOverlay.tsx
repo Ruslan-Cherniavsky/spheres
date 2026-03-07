@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useWorldStore } from '../../stores/worldStore';
+import { WORLD_CONFIG } from '@spheres/shared';
 
 export default function ContactOverlay() {
   const nearestPlayer = useWorldStore((s) => s.nearestPlayer);
@@ -8,6 +9,7 @@ export default function ContactOverlay() {
   const cooldowns = useWorldStore((s) => s.cooldowns);
   const requestContact = useWorldStore((s) => s.requestContact);
   const respondContact = useWorldStore((s) => s.respondContact);
+  const requestStartedAt = useWorldStore((s) => s.requestStartedAt);
 
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -23,6 +25,10 @@ export default function ContactOverlay() {
   const cooldownLeft = isOnCooldown
     ? Math.ceil((cooldowns[nearestPlayer!.uid] - now) / 1000)
     : 0;
+
+  const timeoutLeft = requestStartedAt
+    ? Math.max(0, Math.ceil((requestStartedAt + WORLD_CONFIG.contactRequestTimeoutMs - now) / 1000))
+    : null;
 
   return (
     <div className="contact-overlay">
@@ -52,14 +58,20 @@ export default function ContactOverlay() {
       {/* Outgoing request pending */}
       {contactState === 'outgoing' && (
         <div className="contact-prompt">
-          <span className="contact-pending">Requesting contact...</span>
+          <span className="contact-pending">
+            Requesting contact...
+            {timeoutLeft !== null && <span className="contact-timer">{timeoutLeft}s</span>}
+          </span>
         </div>
       )}
 
       {/* Incoming request */}
       {contactState === 'incoming' && incomingFromUid && (
         <div className="contact-incoming">
-          <p className="contact-incoming-title">Contact Request</p>
+          <p className="contact-incoming-title">
+            Contact Request
+            {timeoutLeft !== null && <span className="contact-timer">{timeoutLeft}s</span>}
+          </p>
           <div className="contact-actions">
             <button
               className="btn btn-primary"

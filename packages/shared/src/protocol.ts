@@ -36,6 +36,7 @@ export interface ServerEvents {
   }) => void;
   incoming_request: (data: { fromUid: string }) => void;
   request_declined: (data: { byUid: string }) => void;
+  request_timeout: (data: { fromUid: string }) => void;
   contact_started: (data: { withUid: string }) => void;
   chat_message: (data: {
     fromUid: string;

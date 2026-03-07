@@ -529,6 +529,13 @@ button {
   animation: pulse-hint 1.5s ease-in-out infinite;
 }
 
+.contact-timer {
+  margin-left: 0.5em;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  font-size: 0.85em;
+}
+
 .contact-cooldown {
   color: var(--text-secondary);
   font-size: 0.8rem;

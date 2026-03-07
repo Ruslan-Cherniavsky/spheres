@@ -46,6 +46,21 @@ const io = new Server(httpServer, {
 
 // socket → world mapping
 const socketMeta = new Map<string, { worldId: string; uid: string }>();
+// contact request timeout tracking: "requesterUid:targetUid" → timeoutId
+const requestTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+
+function requestKey(uid1: string, uid2: string) {
+  return `${uid1}:${uid2}`;
+}
+
+function clearRequestTimeout(uid1: string, uid2: string) {
+  const k = requestKey(uid1, uid2);
+  const tid = requestTimeouts.get(k);
+  if (tid) {
+    clearTimeout(tid);
+    requestTimeouts.delete(k);
+  }
+}
 
 io.on('connection', (socket) => {
   console.log(`[ws] connected: ${socket.id}`);
@@ -142,6 +157,25 @@ io.on('connection', (socket) => {
       targetSock?.emit('incoming_request', { fromUid: meta.uid });
     }
 
+    // Auto-decline after timeout
+    const key = requestKey(meta.uid, targetUid);
+    const tid = setTimeout(() => {
+      requestTimeouts.delete(key);
+      const r = worldManager.getPlayer(meta.worldId, meta.uid);
+      const t = worldManager.getPlayer(meta.worldId, targetUid);
+      if (r?.status === 'requesting') r.status = 'idle';
+      if (t?.status === 'requesting') t.status = 'idle';
+
+      const reqSock = findSocketByUid(meta.uid);
+      reqSock?.emit('request_declined', { byUid: targetUid });
+      if (t && !t.isAI) {
+        const tSock = findSocketByUid(targetUid);
+        tSock?.emit('request_timeout', { fromUid: meta.uid });
+      }
+      console.log(`[contact] timeout: ${meta.uid} → ${targetUid}`);
+    }, WORLD_CONFIG.contactRequestTimeoutMs);
+    requestTimeouts.set(key, tid);
+
     console.log(`[contact] ${meta.uid} → ${targetUid}`);
   });
 
@@ -149,6 +183,8 @@ io.on('connection', (socket) => {
   socket.on('respond_contact', ({ fromUid, accept }) => {
     const meta = socketMeta.get(socket.id);
     if (!meta) return;
+
+    clearRequestTimeout(fromUid, meta.uid);
 
     const requester = worldManager.getPlayer(meta.worldId, fromUid);
     const responder = worldManager.getPlayer(meta.worldId, meta.uid);
@@ -281,6 +317,14 @@ function handleLeave(socket: import('socket.io').Socket) {
           other.status = 'idle';
         }
       }
+    }
+  }
+
+  // Clear any pending request timeouts involving this player
+  for (const [key, tid] of requestTimeouts) {
+    if (key.startsWith(`${meta.uid}:`) || key.endsWith(`:${meta.uid}`)) {
+      clearTimeout(tid);
+      requestTimeouts.delete(key);
     }
   }
 

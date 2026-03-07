@@ -54,6 +54,7 @@ export const WORLD_CONFIG = {
   positionUpdateRateHz: 10,
   proximityThreshold: 8,
   contactCooldownMs: 15_000,
+  contactRequestTimeoutMs: 30_000,
   chatRateLimitMs: 200,
   worldBounds: { min: -200, max: 200 },
   boostMultiplier: 2.5,

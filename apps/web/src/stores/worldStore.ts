@@ -32,6 +32,9 @@ interface WorldStore {
   incomingFromUid: string | null;
   cooldowns: Record<string, number>;
 
+  // Contact timing
+  requestStartedAt: number | null;
+
   // Chat
   chatMessages: ChatMessage[];
   chatMessageCount: number;
@@ -68,6 +71,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   contactTargetUid: null,
   incomingFromUid: null,
   cooldowns: {},
+  requestStartedAt: null,
   chatMessages: [],
   chatMessageCount: 0,
   ratingFeedback: null,
@@ -155,7 +159,11 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     // ── Contact events ────────────────────
 
     socket.on('incoming_request', ({ fromUid }) => {
-      set({ contactState: 'incoming', incomingFromUid: fromUid });
+      set({ contactState: 'incoming', incomingFromUid: fromUid, requestStartedAt: Date.now() });
+    });
+
+    socket.on('request_timeout', () => {
+      set({ contactState: 'idle', incomingFromUid: null, requestStartedAt: null });
     });
 
     socket.on('contact_started', ({ withUid }) => {
@@ -163,6 +171,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         contactState: 'chatting',
         contactTargetUid: withUid,
         incomingFromUid: null,
+        requestStartedAt: null,
         chatMessages: [],
         chatMessageCount: 0,
       });
@@ -183,6 +192,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       set({
         contactState: 'idle',
         contactTargetUid: null,
+        requestStartedAt: null,
         cooldowns: {
           ...cooldowns,
           [byUid]: Date.now() + WORLD_CONFIG.contactCooldownMs,
@@ -193,9 +203,9 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     socket.on('chat_ended', ({ withUid }) => {
       const { chatMessageCount } = get();
       if (chatMessageCount >= 1) {
-        set({ contactState: 'rating', contactTargetUid: withUid, incomingFromUid: null, chatMessages: [], chatMessageCount: 0 });
+        set({ contactState: 'rating', contactTargetUid: withUid, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
       } else {
-        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, chatMessages: [], chatMessageCount: 0 });
+        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
       }
     });
 
@@ -228,12 +238,12 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       console.error('[socket] error:', message);
       const { contactState } = get();
       if (contactState === 'outgoing' || contactState === 'incoming') {
-        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null });
+        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
       }
     });
 
     socket.on('disconnect', () => {
-      set({ connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null });
+      set({ connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
     });
 
     socket.connect();
@@ -254,6 +264,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       contactState: 'idle',
       contactTargetUid: null,
       incomingFromUid: null,
+      requestStartedAt: null,
       cooldowns: {},
     });
   },
@@ -270,7 +281,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     const { socket, connected, contactState } = get();
     if (!socket || !connected || contactState !== 'idle') return;
     socket.emit('request_contact', { targetUid });
-    set({ contactState: 'outgoing', contactTargetUid: targetUid });
+    set({ contactState: 'outgoing', contactTargetUid: targetUid, requestStartedAt: Date.now() });
   },
 
   respondContact: (fromUid, accept) => {
@@ -283,11 +294,12 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         contactState: 'chatting',
         contactTargetUid: fromUid,
         incomingFromUid: null,
+        requestStartedAt: null,
         chatMessages: [],
         chatMessageCount: 0,
       });
     } else {
-      set({ contactState: 'idle', incomingFromUid: null });
+      set({ contactState: 'idle', incomingFromUid: null, requestStartedAt: null });
     }
   },
 
@@ -306,9 +318,9 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     socket.emit('end_chat', { withUid: contactTargetUid });
 
     if (chatMessageCount >= 1) {
-      set({ contactState: 'rating', chatMessages: [], chatMessageCount: 0 });
+      set({ contactState: 'rating', requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
     } else {
-      set({ contactState: 'idle', contactTargetUid: null, chatMessages: [], chatMessageCount: 0 });
+      set({ contactState: 'idle', contactTargetUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
     }
   },
 
@@ -323,10 +335,10 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     if (socket && connected && contactTargetUid) {
       socket.emit('rate_core', { withUid: contactTargetUid, value });
     }
-    set({ contactState: 'idle', contactTargetUid: null });
+    set({ contactState: 'idle', contactTargetUid: null, requestStartedAt: null });
   },
 
   skipRating: () => {
-    set({ contactState: 'idle', contactTargetUid: null });
+    set({ contactState: 'idle', contactTargetUid: null, requestStartedAt: null });
   },
 }));
