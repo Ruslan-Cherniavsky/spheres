@@ -5,7 +5,7 @@ import * as THREE from 'three';
 // ─── STARFIELD CONTROLS ─────────────────────────────────────────────
 const CFG = {
   // Quantity
-  count: 7000,
+  count: 6000,
   brightStarChance: 0.09,        // % of stars that are large/bright
 
   // Shell (distance from camera)
@@ -17,7 +17,7 @@ const CFG = {
   sizeNormalMax: 1.1,
   sizeBrightMin: 1.2,
   sizeBrightMax: 1.8,
-  pointScale: 1.8,               // multiplier applied to all sizes
+  pointScale: 1.9,               // multiplier applied to all sizes
   pointMin: 0.1,                 // clamp: smallest rendered size (px)
   pointMax: 5.0,                 // clamp: largest rendered size (px)
 
@@ -25,8 +25,8 @@ const CFG = {
   driftSpeed: 0.1,
 
   // Pulse / twinkle
-  pulseSpeedMin: 10.5,            // slowest pulse (rad/s)
-  pulseSpeedMax: 80.4,            // fastest pulse (via aPhase)
+  pulseSpeedMin: 0.1,            // slowest pulse (rad/s)
+  pulseSpeedMax: 70.4,            // fastest pulse (via aPhase)
   pulseSpeedMin2: 2.5,           // second wave base speed
   pulseSpeedMax2: 3.8,           // second wave max speed
   pulseAmpBig: 0.01,             // amplitude for biggest stars → range 85%-100%
