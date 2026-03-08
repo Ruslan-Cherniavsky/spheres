@@ -6,30 +6,30 @@ import * as THREE from 'three';
 const CFG = {
   // Quantity
   count: 7000,
-  brightStarChance: 0.05,        // % of stars that are large/bright
+  brightStarChance: 0.09,        // % of stars that are large/bright
 
   // Shell (distance from camera)
-  shellMin: 100,
+  shellMin: 50,
   shellMax: 800,
 
   // Sizes (screen pixels before pixelRatio)
-  sizeNormalMin: 0.7,
+  sizeNormalMin: 0.8,
   sizeNormalMax: 1.1,
   sizeBrightMin: 1.2,
-  sizeBrightMax: 1.9,
-  pointScale: 2.0,               // multiplier applied to all sizes
-  pointMin: 1.0,                 // clamp: smallest rendered size (px)
+  sizeBrightMax: 1.8,
+  pointScale: 1.8,               // multiplier applied to all sizes
+  pointMin: 0.1,                 // clamp: smallest rendered size (px)
   pointMax: 5.0,                 // clamp: largest rendered size (px)
 
   // Drift (0 = stationary)
-  driftSpeed: 0.4,
+  driftSpeed: 0.1,
 
   // Pulse / twinkle
-  pulseSpeedMin: 0.5,            // slowest pulse (rad/s)
-  pulseSpeedMax: 3.4,            // fastest pulse (via aPhase)
+  pulseSpeedMin: 10.5,            // slowest pulse (rad/s)
+  pulseSpeedMax: 80.4,            // fastest pulse (via aPhase)
   pulseSpeedMin2: 2.5,           // second wave base speed
   pulseSpeedMax2: 3.8,           // second wave max speed
-  pulseAmpBig: 0.95,             // amplitude for biggest stars → range 85%-100%
+  pulseAmpBig: 0.01,             // amplitude for biggest stars → range 85%-100%
   pulseAmpSmall: 0.90,           // amplitude for smallest stars → range 50%-100%
 
   // Colors (% chances)
