@@ -85,10 +85,10 @@ export default function WorldPage() {
         <EffectComposer>
           <Bloom
             intensity={1}
-            luminanceThreshold={0.1}
-            luminanceSmoothing={1}
-            mipmapBlur
+            luminanceThreshold={1}
             radius={0.55}
+            luminanceSmoothing={0.025}
+            mipmapBlur
           />
         </EffectComposer>
       </Canvas>

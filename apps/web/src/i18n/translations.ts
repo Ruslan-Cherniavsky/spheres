@@ -75,7 +75,8 @@ interface TranslationStrings {
     rateBlockedBody: string;
     rateBlockedTimer: string;
     received: string;
-  }
+  };
+}
 
 const translations: Record<SupportedLanguage, TranslationStrings> = {
   en: {
@@ -231,6 +232,7 @@ but consciousnesses do.`,
       connecting: 'Connecting to world...',
       connected: 'Connected',
       disconnected: 'Disconnected',
+      offline: 'Offline',
       changeAura: 'Change Aura',
       back: '← Back',
       hintFlying: 'WASD move · Mouse look · Shift boost · E contact · ESC menu',
@@ -267,7 +269,10 @@ but consciousnesses do.`,
       rateBlockedTitle: 'Rating on cooldown',
       rateBlockedBody: 'You have already rated this user.',
       rateBlockedTimer: 'You can rate again in {time}',
-      received: 'received', {
+      received: 'received',
+    },
+  },
+  he: {
     app: { title: 'SPHERES' },
     auth: {
       signIn: 'התחברות',
@@ -416,6 +421,7 @@ but consciousnesses do.`,
       connecting: '...מתחבר לעולם',
       connected: 'מחובר',
       disconnected: 'מנותק',
+      offline: 'לא מקוון',
       changeAura: 'שנה אווירה',
       back: '← חזרה',
       hintFlying: 'WASD תזוזה · עכבר כיוון · Shift האצה · E קשר · ESC תפריט',
@@ -453,6 +459,9 @@ but consciousnesses do.`,
       rateBlockedBody: 'כבר דירגת את המשתמש הזה.',
       rateBlockedTimer: 'תוכל לדרג שוב בעוד {time}',
       received: 'התקבל',
+    },
+  },
+  ru: {
     app: { title: 'SPHERES' },
     auth: {
       signIn: 'Войти',
@@ -602,6 +611,7 @@ Spheres — это социальный эксперимент.
       connecting: 'Подключение к миру...',
       connected: 'Подключено',
       disconnected: 'Отключено',
+      offline: 'Не в сети',
       changeAura: 'Сменить ауру',
       back: '← Назад',
       hintFlying: 'WASD движение · Мышь обзор · Shift ускорение · E контакт · ESC меню',
@@ -639,6 +649,9 @@ Spheres — это социальный эксперимент.
       rateBlockedBody: 'Вы уже оценили этого пользователя.',
       rateBlockedTimer: 'Снова оценить можно через {time}',
       received: 'получено',
+    },
+  },
+};
 
 export type Translations = TranslationStrings;
 
