@@ -173,6 +173,8 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     });
 
     socket.on('request_timeout', () => {
+      const { contactState } = get();
+      if (contactState !== 'incoming' && contactState !== 'outgoing') return;
       set({ contactState: 'idle', incomingFromUid: null, requestStartedAt: null });
     });
 
@@ -198,7 +200,8 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     });
 
     socket.on('request_declined', ({ byUid }) => {
-      const { cooldowns } = get();
+      const { contactState, cooldowns } = get();
+      if (contactState !== 'outgoing') return;
       set({
         contactState: 'idle',
         contactTargetUid: null,

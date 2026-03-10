@@ -2,6 +2,7 @@ import type { PlayerState, Vec3, AuraType } from '@spheres/shared';
 
 export interface ServerPlayerState extends PlayerState {
   socketId: string;
+  chattingWith?: string;
 }
 
 interface WorldState {
@@ -53,7 +54,7 @@ class WorldManager {
 
     const snapshot: Record<string, PlayerState> = {};
     for (const [uid, player] of world.players) {
-      const { socketId: _, ...state } = player;
+      const { socketId: _, chattingWith: _c, ...state } = player;
       snapshot[uid] = state;
     }
     return snapshot;

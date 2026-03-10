@@ -179,11 +179,13 @@ io.on('connection', (socket) => {
       aura: data.aura as AuraType | undefined,
     });
 
+    const player = worldManager.getPlayer(meta.worldId, meta.uid);
     socket.to(meta.worldId).emit('player_update', {
       uid: meta.uid,
       position: data.position,
       rotation: data.rotation,
       aura: data.aura as AuraType | undefined,
+      status: player?.status,
     });
   });
 
@@ -206,7 +208,9 @@ io.on('connection', (socket) => {
     }
 
     requester.status = 'requesting';
+    requester.chattingWith = targetUid;
     target.status = 'requesting';
+    target.chattingWith = meta.uid;
 
     if (target.isAI) {
       scheduleAIResponse(meta.worldId, meta.uid, targetUid);
@@ -215,14 +219,18 @@ io.on('connection', (socket) => {
       targetSock?.emit('incoming_request', { fromUid: meta.uid });
     }
 
-    // Auto-decline after timeout
+    // Auto-decline after timeout (only if still in requesting state)
     const key = requestKey(meta.uid, targetUid);
     const tid = setTimeout(() => {
       requestTimeouts.delete(key);
       const r = worldManager.getPlayer(meta.worldId, meta.uid);
       const t = worldManager.getPlayer(meta.worldId, targetUid);
-      if (r?.status === 'requesting') r.status = 'idle';
-      if (t?.status === 'requesting') t.status = 'idle';
+
+      if (!r || r.status !== 'requesting') return;
+
+      r.status = 'idle';
+      r.chattingWith = undefined;
+      if (t?.status === 'requesting') { t.status = 'idle'; t.chattingWith = undefined; }
 
       const reqSock = findSocketByUid(meta.uid);
       reqSock?.emit('request_declined', { byUid: targetUid });
@@ -250,15 +258,26 @@ io.on('connection', (socket) => {
 
     if (accept) {
       requester.status = 'chatting';
+      requester.chattingWith = meta.uid;
       responder.status = 'chatting';
+      responder.chattingWith = fromUid;
 
       const reqSock = io.sockets.sockets.get(requester.socketId);
       reqSock?.emit('contact_started', { withUid: meta.uid });
       socket.emit('contact_started', { withUid: fromUid });
+
+      socket.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'chatting' });
+      socket.to(meta.worldId).emit('player_update', { uid: fromUid, status: 'chatting' });
+
       console.log(`[contact] accepted: ${fromUid} ↔ ${meta.uid}`);
     } else {
       requester.status = 'idle';
+      requester.chattingWith = undefined;
       responder.status = 'idle';
+      responder.chattingWith = undefined;
+
+      io.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'idle' });
+      io.to(meta.worldId).emit('player_update', { uid: fromUid, status: 'idle' });
 
       const reqSock = io.sockets.sockets.get(requester.socketId);
       reqSock?.emit('request_declined', { byUid: meta.uid });
@@ -299,8 +318,11 @@ io.on('connection', (socket) => {
     const player = worldManager.getPlayer(meta.worldId, meta.uid);
     const other = worldManager.getPlayer(meta.worldId, withUid);
 
-    if (player) player.status = 'idle';
-    if (other) other.status = 'idle';
+    if (player) { player.status = 'idle'; player.chattingWith = undefined; }
+    if (other) { other.status = 'idle'; other.chattingWith = undefined; }
+
+    io.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'idle' });
+    io.to(meta.worldId).emit('player_update', { uid: withUid, status: 'idle' });
 
     if (other && !other.isAI) {
       const otherSock = findSocketByUid(withUid);
@@ -383,27 +405,25 @@ function handleLeave(socket: import('socket.io').Socket, socketIdOverride?: stri
   const meta = socketMeta.get(sid);
   if (!meta) return;
 
-  // If player was chatting/requesting, reset the other party
   const player = worldManager.getPlayer(meta.worldId, meta.uid);
-  if (player && player.status !== 'idle') {
-    // Find any player in chatting/requesting state linked to this one
-    const snapshot = worldManager.getSnapshot(meta.worldId);
-    for (const [uid, p] of Object.entries(snapshot)) {
-      if (uid === meta.uid) continue;
-      if (p.status === 'chatting' || p.status === 'requesting') {
-        const other = worldManager.getPlayer(meta.worldId, uid);
-        if (other && !other.isAI) {
-          other.status = 'idle';
-          const otherSock = io.sockets.sockets.get(other.socketId);
-          otherSock?.emit('chat_ended', { withUid: meta.uid });
-        } else if (other?.isAI) {
-          other.status = 'idle';
+  if (player && player.status !== 'idle' && player.chattingWith) {
+    const partner = worldManager.getPlayer(meta.worldId, player.chattingWith);
+    if (partner) {
+      partner.status = 'idle';
+      partner.chattingWith = undefined;
+      io.to(meta.worldId).emit('player_update', { uid: partner.uid, status: 'idle' });
+
+      if (!partner.isAI) {
+        const partnerSock = io.sockets.sockets.get(partner.socketId);
+        if (player.status === 'chatting') {
+          partnerSock?.emit('chat_ended', { withUid: meta.uid });
+        } else {
+          partnerSock?.emit('request_timeout', { fromUid: meta.uid });
         }
       }
     }
   }
 
-  // Clear any pending request timeouts involving this player
   for (const [key, tid] of requestTimeouts) {
     if (key.startsWith(`${meta.uid}:`) || key.endsWith(`:${meta.uid}`)) {
       clearTimeout(tid);
@@ -426,16 +446,26 @@ function scheduleAIResponse(worldId: string, requesterUid: string, aiUid: string
     const ai = worldManager.getPlayer(worldId, aiUid);
     if (!requester || !ai || requester.status !== 'requesting') return;
 
+    clearRequestTimeout(requesterUid, aiUid);
+
     if (shouldAccept) {
       requester.status = 'chatting';
+      requester.chattingWith = aiUid;
       ai.status = 'chatting';
+      ai.chattingWith = requesterUid;
 
       const reqSock = findSocketByUid(requesterUid);
       reqSock?.emit('contact_started', { withUid: aiUid });
+
+      io.to(worldId).emit('player_update', { uid: requesterUid, status: 'chatting' });
+      io.to(worldId).emit('player_update', { uid: aiUid, status: 'chatting' });
+
       console.log(`[ai] ${aiUid} accepted contact from ${requesterUid}`);
     } else {
       requester.status = 'idle';
+      requester.chattingWith = undefined;
       ai.status = 'idle';
+      ai.chattingWith = undefined;
 
       const reqSock = findSocketByUid(requesterUid);
       reqSock?.emit('request_declined', { byUid: aiUid });
