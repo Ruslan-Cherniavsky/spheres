@@ -34,9 +34,19 @@ interface Props {
   emitLight?: boolean;
 }
 
+const SPAWN_DURATION = 1.2;
+const SPAWN_PHASE1_END = 0.7;
+const SPAWN_SCALE_PEAK = 1.15;
+const SPAWN_EMISSIVE_START = 6.0;
+const SPAWN_EMISSIVE_END = 2.0;
+const SPAWN_PHASE1_END_SCALE = SPAWN_SCALE_PEAK * (1 - Math.exp(-5 * SPAWN_PHASE1_END));
+
 export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = false }: Props) {
   const auraColor = AURA_COLORS[aura];
   const coreRef = useRef<THREE.Mesh>(null!);
+  const groupRef = useRef<THREE.Group>(null!);
+  const spawnElapsed = useRef(0);
+  const isSpawning = useRef(true);
 
   const glowMats = useMemo(
     () =>
@@ -45,7 +55,7 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
           new THREE.ShaderMaterial({
             uniforms: {
               color: { value: new THREE.Color(auraColor) },
-              opacity: { value: l.opacity },
+              opacity: { value: 0 },
             },
             vertexShader: GLOW_VERTEX,
             fragmentShader: GLOW_FRAGMENT,
@@ -64,20 +74,59 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
 
   useEffect(() => {
     const c = new THREE.Color(auraColor);
-    glowMats.forEach((mat, i) => {
+    glowMats.forEach((mat) => {
       mat.uniforms.color.value.copy(c);
-      mat.uniforms.opacity.value = GLOW_LAYERS[i].opacity;
     });
   }, [auraColor, glowMats]);
 
+  useFrame((_, delta) => {
+    if (!isSpawning.current) return;
+
+    spawnElapsed.current = Math.min(spawnElapsed.current + delta, SPAWN_DURATION);
+    const t = spawnElapsed.current;
+
+    let scale: number;
+    if (t < SPAWN_PHASE1_END) {
+      scale = SPAWN_SCALE_PEAK * (1 - Math.exp(-5 * t));
+    } else {
+      const phase2T = (t - SPAWN_PHASE1_END) / (SPAWN_DURATION - SPAWN_PHASE1_END);
+      scale = SPAWN_PHASE1_END_SCALE + (1.0 - SPAWN_PHASE1_END_SCALE) * phase2T;
+    }
+
+    if (groupRef.current) {
+      groupRef.current.scale.setScalar(scale);
+    }
+
+    const progress = t / SPAWN_DURATION;
+    const emissive = SPAWN_EMISSIVE_START + (SPAWN_EMISSIVE_END - SPAWN_EMISSIVE_START) * progress;
+    if (coreRef.current) {
+      (coreRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = emissive;
+    }
+
+    for (let i = 0; i < glowMats.length; i++) {
+      glowMats[i].uniforms.opacity.value = GLOW_LAYERS[i].opacity * progress;
+    }
+
+    if (t >= SPAWN_DURATION) {
+      if (groupRef.current) groupRef.current.scale.setScalar(1.0);
+      if (coreRef.current) {
+        (coreRef.current.material as THREE.MeshStandardMaterial).emissiveIntensity = SPAWN_EMISSIVE_END;
+      }
+      for (let i = 0; i < glowMats.length; i++) {
+        glowMats[i].uniforms.opacity.value = GLOW_LAYERS[i].opacity;
+      }
+      isSpawning.current = false;
+    }
+  });
+
   return (
-    <group>
+    <group ref={groupRef}>
       <mesh ref={coreRef} renderOrder={0}>
         <sphereGeometry args={[0.2, 32, 32]} />
         <meshStandardMaterial
           color={auraColor}
           emissive={auraColor}
-          emissiveIntensity={2}
+          emissiveIntensity={SPAWN_EMISSIVE_START}
           roughness={0.15}
           metalness={0.0}
           toneMapped={false}
