@@ -19,6 +19,45 @@ const FLIGHT = {
 } as const;
 
 const TRAIL_LEN = 120;
+const TRAIL_WIDTH_HEAD = 0.19;
+const TRAIL_WIDTH_TAIL = 0.002;
+const TRAIL_WIDTH_ALONG_EXP = 0.72;
+const TRAIL_SPEED_MIN = 0.8;
+
+const TRAIL_VERTEX = /* glsl */ `
+attribute float along;
+attribute float side;
+varying float vAlong;
+varying float vSide;
+
+void main() {
+  vAlong = along;
+  vSide = side;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}
+`;
+
+const TRAIL_FRAGMENT = /* glsl */ `
+uniform vec3 uColor;
+uniform float uSpeed;
+uniform float uBoost;
+varying float vAlong;
+varying float vSide;
+
+void main() {
+  float t = vAlong;
+  float softEdge = 1.0 - vSide * vSide;
+  softEdge = pow(softEdge, 1.4);
+  float nucleus = smoothstep(0.78, 1.0, t);
+  float coma = pow(max(t, 0.001), 0.5);
+  float speedMul = 0.15 + 0.85 * uSpeed;
+  float boostMul = mix(1.0, 1.6, uBoost);
+  float alpha = (nucleus * 1.1 + coma * 0.45) * softEdge * speedMul * boostMul;
+  alpha = clamp(alpha, 0.0, 1.0);
+  vec3 rgb = uColor * (0.6 + 0.9 * nucleus + 0.3 * coma);
+  gl_FragColor = vec4(rgb * alpha, alpha);
+}
+`;
 
 // Reusable objects — allocated once, never per-frame
 const _forward = new THREE.Vector3();
@@ -29,6 +68,10 @@ const _euler = new THREE.Euler(0, 0, 0, 'YXZ');
 const _idealPos = new THREE.Vector3();
 const _cameraOffset = new THREE.Vector3();
 const _toTarget = new THREE.Vector3();
+const _trailTangent = new THREE.Vector3();
+const _trailView = new THREE.Vector3();
+const _trailSide = new THREE.Vector3();
+const _trailUp = new THREE.Vector3(0, 1, 0);
 
 interface Props {
   aura: AuraType;
@@ -67,29 +110,70 @@ export default function FlightController({
     space: false,
   });
 
-  // ── Custom trail (line-based, no MeshLine artifacts) ──
+  // ── Trail: polyline samples + camera-facing ribbon (wide near sphere, thin at tail) ──
 
-  const trailData = useMemo(() => {
-    const positions = new Float32Array(TRAIL_LEN * 3);
-    const geo = new THREE.BufferGeometry();
-    const posAttr = new THREE.BufferAttribute(positions, 3);
-    posAttr.setUsage(THREE.DynamicDrawUsage);
-    geo.setAttribute('position', posAttr);
-    geo.setDrawRange(0, 0);
-    return { positions, geo, count: 0 };
-  }, []);
-
-  const trailColor = useMemo(
-    () => new THREE.Color(AURA_COLORS[aura]).multiplyScalar(0.35),
-    [aura],
+  const trailSamples = useMemo(
+    () => ({
+      positions: new Float32Array(TRAIL_LEN * 3),
+      along: new Float32Array(TRAIL_LEN),
+      count: 0,
+    }),
+    [],
   );
 
-  const trailLine = useMemo(() => {
-    const mat = new THREE.LineBasicMaterial({ color: trailColor, transparent: true, opacity: 0.4, depthWrite: false });
-    const line = new THREE.Line(trailData.geo, mat);
-    line.frustumCulled = false;
-    return line;
-  }, [trailData, trailColor]);
+  const trailRibbon = useMemo(() => {
+    const ribbonPos = new Float32Array(TRAIL_LEN * 2 * 3);
+    const ribbonAlong = new Float32Array(TRAIL_LEN * 2);
+    const ribbonSide = new Float32Array(TRAIL_LEN * 2);
+    const indices = new Uint16Array((TRAIL_LEN - 1) * 6);
+    for (let i = 0; i < TRAIL_LEN - 1; i++) {
+      const o = i * 6;
+      const v0 = i * 2;
+      const v1 = i * 2 + 1;
+      const v2 = (i + 1) * 2;
+      const v3 = (i + 1) * 2 + 1;
+      indices[o + 0] = v0;
+      indices[o + 1] = v1;
+      indices[o + 2] = v2;
+      indices[o + 3] = v1;
+      indices[o + 4] = v3;
+      indices[o + 5] = v2;
+    }
+    const geo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(ribbonPos, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('position', posAttr);
+    const alongAttr = new THREE.BufferAttribute(ribbonAlong, 1);
+    alongAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('along', alongAttr);
+    const sideAttr = new THREE.BufferAttribute(ribbonSide, 1);
+    sideAttr.setUsage(THREE.DynamicDrawUsage);
+    geo.setAttribute('side', sideAttr);
+    geo.setIndex(new THREE.BufferAttribute(indices, 1));
+    geo.setDrawRange(0, 0);
+    return { geo, ribbonPos, ribbonAlong, ribbonSide };
+  }, []);
+
+  const trailMesh = useMemo(() => {
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uColor: { value: new THREE.Color(AURA_COLORS[aura]) },
+        uSpeed: { value: 0 },
+        uBoost: { value: 0 },
+      },
+      vertexShader: TRAIL_VERTEX,
+      fragmentShader: TRAIL_FRAGMENT,
+      transparent: true,
+      depthWrite: false,
+      depthTest: true,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+      toneMapped: false,
+    });
+    const mesh = new THREE.Mesh(trailRibbon.geo, mat);
+    mesh.frustumCulled = false;
+    return mesh;
+  }, [trailRibbon]);
 
   useEffect(() => {
     if (!positionApplied.current && initialPosition && groupRef.current) {
@@ -99,8 +183,21 @@ export default function FlightController({
   }, [initialPosition]);
 
   useEffect(() => {
-    return () => { trailData.geo.dispose(); trailLine.material.dispose(); };
-  }, [trailData, trailLine]);
+    return () => {
+      trailRibbon.geo.dispose();
+      trailMesh.material.dispose();
+    };
+  }, [trailRibbon, trailMesh]);
+
+  useEffect(() => {
+    const hex = AURA_COLORS[aura];
+    const c = new THREE.Color(hex);
+    const hsl = { h: 0, s: 0, l: 0 };
+    c.getHSL(hsl);
+    c.setHSL(hsl.h, THREE.MathUtils.clamp(hsl.s * 1.12, 0, 1), THREE.MathUtils.clamp(hsl.l * 0.72 + 0.14, 0, 1));
+    const mat = trailMesh.material as THREE.ShaderMaterial;
+    mat.uniforms.uColor.value.copy(c);
+  }, [aura, trailMesh]);
 
   // ── Keyboard ────────────────────────────
 
@@ -275,24 +372,102 @@ export default function FlightController({
 
     onPositionUpdate?.(group.position, velocity.current);
 
-    // ── Update trail ──────────────────────
-    const td = trailData;
+    // ── Update trail samples + ribbon mesh ──────────────────────
+    const ts = trailSamples;
     const px = group.position.x, py = group.position.y, pz = group.position.z;
+    const spd = currentSpeed.current;
 
-    if (td.count < TRAIL_LEN) {
-      td.positions[td.count * 3] = px;
-      td.positions[td.count * 3 + 1] = py;
-      td.positions[td.count * 3 + 2] = pz;
-      td.count++;
+    if (spd < TRAIL_SPEED_MIN) {
+      ts.count = 0;
+    } else if (ts.count < TRAIL_LEN) {
+      ts.positions[ts.count * 3] = px;
+      ts.positions[ts.count * 3 + 1] = py;
+      ts.positions[ts.count * 3 + 2] = pz;
+      ts.count++;
     } else {
-      td.positions.copyWithin(0, 3);
-      td.positions[(TRAIL_LEN - 1) * 3] = px;
-      td.positions[(TRAIL_LEN - 1) * 3 + 1] = py;
-      td.positions[(TRAIL_LEN - 1) * 3 + 2] = pz;
+      ts.positions.copyWithin(0, 3);
+      ts.positions[(TRAIL_LEN - 1) * 3] = px;
+      ts.positions[(TRAIL_LEN - 1) * 3 + 1] = py;
+      ts.positions[(TRAIL_LEN - 1) * 3 + 2] = pz;
     }
 
-    (td.geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
-    td.geo.setDrawRange(0, td.count);
+    const n = ts.count;
+    const denom = n > 1 ? n - 1 : 1;
+    for (let i = 0; i < n; i++) {
+      ts.along[i] = i / denom;
+    }
+
+    const rb = trailRibbon;
+    const pos = ts.positions;
+    const al = ts.along;
+    const camPos = camera.position;
+
+    if (n < 2) {
+      rb.geo.setDrawRange(0, 0);
+    } else {
+      for (let i = 0; i < n; i++) {
+        const i3 = i * 3;
+        const pxi = pos[i3];
+        const pyi = pos[i3 + 1];
+        const pzi = pos[i3 + 2];
+
+        if (i === 0) {
+          _trailTangent.set(pos[3] - pxi, pos[4] - pyi, pos[5] - pzi);
+        } else if (i === n - 1) {
+          _trailTangent.set(pxi - pos[i3 - 3], pyi - pos[i3 - 2], pzi - pos[i3 - 1]);
+        } else {
+          _trailTangent.set(
+            pos[i3 + 3] - pos[i3 - 3],
+            pos[i3 + 4] - pos[i3 - 2],
+            pos[i3 + 5] - pos[i3 - 1],
+          );
+        }
+        if (_trailTangent.lengthSq() < 1e-12) {
+          _trailTangent.set(0, 0, -1);
+        } else {
+          _trailTangent.normalize();
+        }
+
+        _trailView.set(camPos.x - pxi, camPos.y - pyi, camPos.z - pzi);
+        _trailView.normalize();
+
+        _trailSide.crossVectors(_trailTangent, _trailView);
+        if (_trailSide.lengthSq() < 1e-8) {
+          _trailSide.crossVectors(_trailTangent, _trailUp);
+        }
+        _trailSide.normalize();
+
+        const aw = al[i];
+        const halfW =
+          0.5 *
+          (TRAIL_WIDTH_TAIL +
+            (TRAIL_WIDTH_HEAD - TRAIL_WIDTH_TAIL) * Math.pow(aw, TRAIL_WIDTH_ALONG_EXP));
+
+        const ri = i * 6;
+        rb.ribbonPos[ri] = pxi - _trailSide.x * halfW;
+        rb.ribbonPos[ri + 1] = pyi - _trailSide.y * halfW;
+        rb.ribbonPos[ri + 2] = pzi - _trailSide.z * halfW;
+        rb.ribbonPos[ri + 3] = pxi + _trailSide.x * halfW;
+        rb.ribbonPos[ri + 4] = pyi + _trailSide.y * halfW;
+        rb.ribbonPos[ri + 5] = pzi + _trailSide.z * halfW;
+
+        const ai = i * 2;
+        rb.ribbonAlong[ai]     = aw;
+        rb.ribbonAlong[ai + 1] = aw;
+        rb.ribbonSide[ai]      = -1;
+        rb.ribbonSide[ai + 1]  =  1;
+      }
+
+      (rb.geo.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+      (rb.geo.attributes.along as THREE.BufferAttribute).needsUpdate = true;
+      (rb.geo.attributes.side as THREE.BufferAttribute).needsUpdate = true;
+      rb.geo.setDrawRange(0, (n - 1) * 6);
+    }
+
+    const trailMat = trailMesh.material as THREE.ShaderMaterial;
+    const speedNorm = THREE.MathUtils.clamp(spd / FLIGHT.boostSpeed, 0, 1);
+    trailMat.uniforms.uSpeed.value = Math.pow(speedNorm, 0.55);
+    trailMat.uniforms.uBoost.value = k.shift && !chatting ? 1 : 0;
 
     // Throttled network send (10 Hz)
     const now = performance.now();
@@ -310,8 +485,8 @@ export default function FlightController({
 
   return (
     <>
-      {/* Trail — world-space line, outside the moving group */}
-      <primitive object={trailLine} />
+      {/* Trail — camera-facing ribbon, wider at the sphere */}
+      <primitive object={trailMesh} />
 
       <group ref={groupRef}>
         <PlayerSphere aura={aura} coreValue={coreValue} speed={currentSpeed.current} emitLight />
