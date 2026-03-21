@@ -20,7 +20,7 @@ import { useTranslation } from '../i18n/useTranslation';
 export default function WorldPage() {
   const user = useAuthStore((s) => s.user);
   const { aura, coreValue, language, setAura } = useUserStore();
-  const { connected, remotePlayers, connect, disconnect, nearestPlayer, contactTargetUid, kickedMessage } = useWorldStore();
+  const { connected, remotePlayers, connect, disconnect, nearestPlayer, contactTargetUid, kickedMessage, spawnPosition } = useWorldStore();
   const navigate = useNavigate();
   const t = useTranslation();
   const [pointerLocked, setPointerLocked] = useState(false);
@@ -69,6 +69,7 @@ export default function WorldPage() {
           coreValue={coreValue}
           onLockChange={setPointerLocked}
           onPositionUpdate={(pos) => playerPosRef.current.copy(pos)}
+          initialPosition={spawnPosition ?? undefined}
         />
         <ProximityDetector playerPosRef={playerPosRef} />
         {remoteEntries.map(([uid, remote]) => (

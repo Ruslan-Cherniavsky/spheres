@@ -13,6 +13,19 @@ import { spawnAISpheres, tickAI, getAIUids } from './ai.js';
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',');
 
+const SPAWN_CENTER = { x: 0, y: 0, z: 0 };
+const SPAWN_RADIUS = 5;
+
+function randomSpawnPosition(center: { x: number; y: number; z: number }, radius: number) {
+  const angle = Math.random() * 2 * Math.PI;
+  const r = Math.sqrt(Math.random()) * radius;
+  return {
+    x: center.x + Math.cos(angle) * r,
+    y: center.y,
+    z: center.z + Math.sin(angle) * r,
+  };
+}
+
 initFirebaseAdmin();
 
 // ── Express ───────────────────────────────
@@ -135,11 +148,7 @@ io.on('connection', (socket) => {
       worldManager.addPlayer(worldId, {
         uid,
         socketId: socket.id,
-        position: {
-          x: (Math.random() - 0.5) * 20,
-          y: (Math.random() - 0.5) * 10,
-          z: (Math.random() - 0.5) * 20,
-        },
+        position: randomSpawnPosition(SPAWN_CENTER, SPAWN_RADIUS),
         aura: 'neutral',
         coreValue: 0,
         status: 'idle',

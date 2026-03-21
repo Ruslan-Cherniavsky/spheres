@@ -35,6 +35,7 @@ interface Props {
   coreValue: number;
   onPositionUpdate?: (pos: THREE.Vector3, vel: THREE.Vector3) => void;
   onLockChange?: (locked: boolean) => void;
+  initialPosition?: { x: number; y: number; z: number };
 }
 
 export default function FlightController({
@@ -42,6 +43,7 @@ export default function FlightController({
   coreValue,
   onPositionUpdate,
   onLockChange,
+  initialPosition,
 }: Props) {
   const { camera, gl } = useThree();
   const groupRef = useRef<THREE.Group>(null!);
@@ -51,6 +53,7 @@ export default function FlightController({
   const pitch = useRef(0);
   const isLocked = useRef(false);
   const lastSendTime = useRef(0);
+  const positionApplied = useRef(false);
   const sendInterval = 1000 / WORLD_CONFIG.positionUpdateRateHz;
   const sendPositionUpdate = useWorldStore((s) => s.sendPositionUpdate);
   const currentSpeed = useRef(0);
@@ -87,6 +90,13 @@ export default function FlightController({
     line.frustumCulled = false;
     return line;
   }, [trailData, trailColor]);
+
+  useEffect(() => {
+    if (!positionApplied.current && initialPosition && groupRef.current) {
+      groupRef.current.position.set(initialPosition.x, initialPosition.y, initialPosition.z);
+      positionApplied.current = true;
+    }
+  }, [initialPosition]);
 
   useEffect(() => {
     return () => { trailData.geo.dispose(); trailLine.material.dispose(); };

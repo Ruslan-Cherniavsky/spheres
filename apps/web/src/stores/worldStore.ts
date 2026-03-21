@@ -42,6 +42,9 @@ interface WorldStore {
   // Rating feedback
   ratingFeedback: { value: number; timestamp: number } | null;
 
+  // Spawn position assigned by server
+  spawnPosition: Vec3 | null;
+
   // Kicked state
   kickedMessage: string | null;
 
@@ -82,6 +85,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   chatMessages: [],
   chatMessageCount: 0,
   ratingFeedback: null,
+  spawnPosition: null,
   kickedMessage: null,
   rateBlocked: false,
   rateBlockedTimeLeft: null,
@@ -110,7 +114,9 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
           targetPos: { ...state.position },
         };
       }
-      set({ connected: true, worldId, remotePlayers });
+      const ownState = (players as Record<string, PlayerState>)[uid];
+      const spawnPosition = ownState?.position ?? null;
+      set({ connected: true, worldId, remotePlayers, spawnPosition });
     });
 
     socket.on('player_joined', ({ player }) => {
@@ -303,6 +309,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
       remotePlayers: {},
       myUid: null,
       nearestPlayer: null,
+      spawnPosition: null,
       contactState: 'idle',
       contactTargetUid: null,
       incomingFromUid: null,
