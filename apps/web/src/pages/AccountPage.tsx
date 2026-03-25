@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useUserStore } from '../stores/userStore';
@@ -7,6 +7,8 @@ import SpherePreview from '../components/SpherePreview';
 import AuraPicker from '../components/AuraPicker';
 import LanguageSelector from '../components/LanguageSelector';
 import { AURA_COLORS, coreValueToRingCount } from '@spheres/shared';
+
+const ONBOARD_STORAGE_KEY = (uid: string) => `spheres_onboard_v1:${uid}`;
 
 export default function AccountPage() {
   const { user, signOut } = useAuthStore();
@@ -18,12 +20,38 @@ export default function AccountPage() {
   const [showRings, setShowRings] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [showAboutPopup, setShowAboutPopup] = useState(false);
+  const onboardingPendingRef = useRef(false);
+  const prevInfoPopupRef = useRef(false);
 
   useEffect(() => {
     if (user && !profile) {
       loadProfile(user.uid, user.email || '');
     }
   }, [user, profile, loadProfile]);
+
+  useEffect(() => {
+    if (!user?.uid || !profile) return;
+    try {
+      if (!localStorage.getItem(ONBOARD_STORAGE_KEY(user.uid))) {
+        onboardingPendingRef.current = true;
+        setShowInfoPopup(true);
+      }
+    } catch {
+      /* skip if storage unavailable */
+    }
+  }, [user?.uid, profile]);
+
+  useEffect(() => {
+    if (prevInfoPopupRef.current && !showInfoPopup && onboardingPendingRef.current && user?.uid) {
+      try {
+        localStorage.setItem(ONBOARD_STORAGE_KEY(user.uid), '1');
+      } catch {
+        /* private mode */
+      }
+      onboardingPendingRef.current = false;
+    }
+    prevInfoPopupRef.current = showInfoPopup;
+  }, [showInfoPopup, user?.uid]);
 
   useEffect(() => {
     if (!showInfoPopup && !showAboutPopup) return;
