@@ -171,6 +171,8 @@ export function getRingLayout(count: number): RingBand[] {
 
 export const SUPPORTED_LANGUAGES: readonly SupportedLanguage[] = ['en', 'he', 'ru'];
 
+export const JUL_UID = 'jul';
+
 /**
  * Maps a value on the [-1, 1] spectrum to a color.
  * -1 = deep crimson, 0 = clean white, +1 = bright cyan.

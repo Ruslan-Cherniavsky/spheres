@@ -4,11 +4,23 @@ import { createServer } from 'node:http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import { getFirestore } from 'firebase-admin/firestore';
-import { WORLD_CONFIG, CORE_VALUE } from '@spheres/shared';
+import { WORLD_CONFIG, CORE_VALUE, JUL_UID } from '@spheres/shared';
 import type { AuraType } from '@spheres/shared';
 import { initFirebaseAdmin, verifyToken } from './auth.js';
 import { worldManager } from './world.js';
 import { spawnAISpheres, tickAI, getAIUids } from './ai.js';
+import {
+  initJul,
+  tickJul,
+  handleJulContactRequest,
+  handleJulChatMessage,
+  handleJulEndChat,
+  handleJulInitiateContact,
+  handleJulRespondAccepted,
+  handleJulRespondDeclined,
+  isJulUid,
+  handleJulPartnerDisconnect,
+} from './jul/index.js';
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 const CORS_ORIGINS = (process.env.CORS_ORIGINS || 'http://localhost:5173').split(',');
@@ -221,7 +233,9 @@ io.on('connection', (socket) => {
     target.status = 'requesting';
     target.chattingWith = meta.uid;
 
-    if (target.isAI) {
+    if (isJulUid(targetUid)) {
+      handleJulContactRequest(meta.worldId, meta.uid);
+    } else if (target.isAI) {
       scheduleAIResponse(meta.worldId, meta.uid, targetUid);
     } else {
       const targetSock = io.sockets.sockets.get(target.socketId);
@@ -260,6 +274,32 @@ io.on('connection', (socket) => {
     if (!meta) return;
 
     clearRequestTimeout(fromUid, meta.uid);
+
+    if (isJulUid(fromUid)) {
+      const julPlayer = worldManager.getPlayer(meta.worldId, JUL_UID);
+      const responder = worldManager.getPlayer(meta.worldId, meta.uid);
+      if (!julPlayer || !responder) return;
+
+      if (accept) {
+        responder.status = 'chatting';
+        responder.chattingWith = JUL_UID;
+        handleJulRespondAccepted(meta.worldId, meta.uid);
+
+        socket.emit('contact_started', { withUid: JUL_UID });
+        io.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'chatting' });
+        io.to(meta.worldId).emit('player_update', { uid: JUL_UID, status: 'chatting' });
+        console.log(`[contact] accepted: ${JUL_UID} ↔ ${meta.uid}`);
+      } else {
+        responder.status = 'idle';
+        responder.chattingWith = undefined;
+        handleJulRespondDeclined(meta.worldId);
+
+        io.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'idle' });
+        io.to(meta.worldId).emit('player_update', { uid: JUL_UID, status: 'idle' });
+        console.log(`[contact] declined: ${meta.uid} declined ${JUL_UID}`);
+      }
+      return;
+    }
 
     const requester = worldManager.getPlayer(meta.worldId, fromUid);
     const responder = worldManager.getPlayer(meta.worldId, meta.uid);
@@ -311,7 +351,9 @@ io.on('connection', (socket) => {
     const target = worldManager.getPlayer(meta.worldId, toUid);
     if (!target) return;
 
-    if (target.isAI) {
+    if (isJulUid(toUid)) {
+      handleJulChatMessage(meta.worldId, meta.uid, text);
+    } else if (target.isAI) {
       scheduleAIChat(meta.worldId, meta.uid, toUid);
     } else {
       const targetSock = findSocketByUid(toUid);
@@ -333,7 +375,24 @@ io.on('connection', (socket) => {
     io.to(meta.worldId).emit('player_update', { uid: meta.uid, status: 'idle' });
     io.to(meta.worldId).emit('player_update', { uid: withUid, status: 'idle' });
 
-    if (other && !other.isAI) {
+    if (isJulUid(withUid)) {
+      socket.emit('chat_ended', { withUid });
+      handleJulEndChat(meta.worldId, meta.uid).then(({ rating }) => {
+        const delay = 1000 + Math.random() * 2000;
+        setTimeout(() => {
+          const p = worldManager.getPlayer(meta.worldId, meta.uid);
+          if (!p) return;
+          const step = rating * CORE_VALUE.ratingStep;
+          const newCore = Math.max(CORE_VALUE.min, Math.min(CORE_VALUE.max, p.coreValue + step));
+          p.coreValue = newCore;
+          io.to(meta.worldId).emit('core_updated', { uid: meta.uid, coreValue: newCore });
+          const pSock = findSocketByUid(meta.uid);
+          pSock?.emit('rating_received', { fromUid: JUL_UID, value: rating, newCoreValue: newCore });
+          if (!p.isAI) updateCoreInFirestore(meta.uid, newCore);
+          console.log(`[jul] rated ${meta.uid}: ${rating} → core=${newCore.toFixed(3)}`);
+        }, delay);
+      });
+    } else if (other && !other.isAI) {
       const otherSock = findSocketByUid(withUid);
 
       const [senderAllowed, receiverAllowed] = await Promise.all([
@@ -352,7 +411,7 @@ io.on('connection', (socket) => {
       socket.emit('chat_ended', { withUid });
     }
 
-    if (other?.isAI) {
+    if (other?.isAI && !isJulUid(withUid)) {
       scheduleAIRating(meta.worldId, meta.uid, withUid);
     }
 
@@ -422,7 +481,9 @@ function handleLeave(socket: import('socket.io').Socket, socketIdOverride?: stri
       partner.chattingWith = undefined;
       io.to(meta.worldId).emit('player_update', { uid: partner.uid, status: 'idle' });
 
-      if (!partner.isAI) {
+      if (isJulUid(partner.uid)) {
+        handleJulPartnerDisconnect(meta.worldId, meta.uid);
+      } else if (!partner.isAI) {
         const partnerSock = io.sockets.sockets.get(partner.socketId);
         if (player.status === 'chatting') {
           partnerSock?.emit('chat_ended', { withUid: meta.uid });
@@ -577,23 +638,71 @@ async function updateCoreInFirestore(uid: string, coreValue: number) {
 // ── AI tick loop (10 Hz) ──────────────────
 
 const DEFAULT_WORLD = WORLD_CONFIG.defaultWorldId;
-spawnAISpheres(DEFAULT_WORLD, 10);
+// spawnAISpheres(DEFAULT_WORLD, 10);
+initJul(DEFAULT_WORLD, {
+  findSocketByUid,
+  emitToWorld: (worldId, event, data) => io.to(worldId).emit(event, data),
+  clearRequestTimeout: (uid1, uid2) => clearRequestTimeout(uid1, uid2),
+});
 
 const AI_TICK_MS = 100;
 setInterval(() => {
-  tickAI(DEFAULT_WORLD, AI_TICK_MS / 1000);
+  // tickAI(DEFAULT_WORLD, AI_TICK_MS / 1000);
 
-  const aiUids = getAIUids();
-  for (const uid of aiUids) {
-    const player = worldManager.getPlayer(DEFAULT_WORLD, uid);
-    if (!player) continue;
+  // Jul tick
+  const julAction = tickJul(DEFAULT_WORLD, AI_TICK_MS / 1000);
+  if (julAction && julAction.type === 'initiate_contact') {
+    const julPlayer = worldManager.getPlayer(DEFAULT_WORLD, JUL_UID);
+    const targetPlayer = worldManager.getPlayer(DEFAULT_WORLD, julAction.targetUid);
+    if (julPlayer && targetPlayer && targetPlayer.status === 'idle' && julPlayer.status === 'idle') {
+      julPlayer.status = 'requesting';
+      julPlayer.chattingWith = julAction.targetUid;
+      targetPlayer.status = 'requesting';
+      targetPlayer.chattingWith = JUL_UID;
+
+      const targetSock = findSocketByUid(julAction.targetUid);
+      targetSock?.emit('incoming_request', { fromUid: JUL_UID });
+
+      const key = requestKey(JUL_UID, julAction.targetUid);
+      const tid = setTimeout(() => {
+        requestTimeouts.delete(key);
+        const j = worldManager.getPlayer(DEFAULT_WORLD, JUL_UID);
+        const t = worldManager.getPlayer(DEFAULT_WORLD, julAction.targetUid);
+        if (j?.status === 'requesting') { j.status = 'idle'; j.chattingWith = undefined; }
+        if (t?.status === 'requesting') { t.status = 'idle'; t.chattingWith = undefined; }
+        const tSock = findSocketByUid(julAction.targetUid);
+        tSock?.emit('request_timeout', { fromUid: JUL_UID });
+      }, WORLD_CONFIG.contactRequestTimeoutMs);
+      requestTimeouts.set(key, tid);
+
+      handleJulInitiateContact(DEFAULT_WORLD, julAction.targetUid);
+      console.log(`[jul] initiating contact with ${julAction.targetUid}`);
+    }
+  }
+
+  // Broadcast Jul position
+  const julPlayer = worldManager.getPlayer(DEFAULT_WORLD, JUL_UID);
+  if (julPlayer) {
     io.to(DEFAULT_WORLD).emit('player_update', {
-      uid,
-      position: player.position,
-      aura: player.aura,
-      status: player.status,
+      uid: JUL_UID,
+      position: julPlayer.position,
+      aura: julPlayer.aura,
+      status: julPlayer.status,
     });
   }
+
+  // Broadcast regular AI positions (disabled)
+  // const aiUids = getAIUids();
+  // for (const uid of aiUids) {
+  //   const player = worldManager.getPlayer(DEFAULT_WORLD, uid);
+  //   if (!player) continue;
+  //   io.to(DEFAULT_WORLD).emit('player_update', {
+  //     uid,
+  //     position: player.position,
+  //     aura: player.aura,
+  //     status: player.status,
+  //   });
+  // }
 }, AI_TICK_MS);
 
 // ── Start ─────────────────────────────────
@@ -602,4 +711,5 @@ httpServer.listen(PORT, () => {
   console.log(`[spheres] world server on :${PORT}`);
   console.log(`[spheres] CORS: ${CORS_ORIGINS.join(', ')}`);
   console.log(`[spheres] AI spheres: 10 in ${DEFAULT_WORLD}`);
+  console.log(`[spheres] Jul spawned in ${DEFAULT_WORLD}`);
 });

@@ -60,6 +60,12 @@ class WorldManager {
     return snapshot;
   }
 
+  getPlayers(worldId: string): ServerPlayerState[] {
+    const world = this.worlds.get(worldId);
+    if (!world) return [];
+    return Array.from(world.players.values());
+  }
+
   getPlayerCount(worldId: string): number {
     return this.worlds.get(worldId)?.players.size ?? 0;
   }
