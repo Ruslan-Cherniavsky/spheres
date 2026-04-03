@@ -63,7 +63,7 @@ export class OpenRouterProvider implements AIProvider {
       const data = (await res.json()) as ChatCompletion;
       const text = data?.choices?.[0]?.message?.content?.trim();
       if (!text) {
-        console.warn('[jul-ai] empty response from API');
+        console.warn('[jul-ai] empty response from API, raw:', JSON.stringify(data).slice(0, 500));
         return randomFallback();
       }
 
