@@ -1,7 +1,7 @@
 import type { AIProvider, DialogueContext, SummaryContext } from './ai-provider.js';
 import { buildDialoguePrompt, buildSummaryPrompt } from '../prompt.js';
 
-const MODEL = 'google/gemma-3n-e2b-it:free';
+const MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 const TIMEOUT_MS = 10_000;
 
