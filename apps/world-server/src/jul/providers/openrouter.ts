@@ -8,7 +8,7 @@ const TIMEOUT_MS = 10_000;
 const FALLBACKS = ['...', 'Hmm...', 'I need a moment...', '*looks away shyly*'];
 
 interface ChatCompletion {
-  choices?: Array<{ message?: { content?: string } }>;
+  choices?: Array<{ message?: { content?: string; reasoning?: string } }>;
 }
 
 function randomFallback(): string {
@@ -33,7 +33,7 @@ export class OpenRouterProvider implements AIProvider {
       const body = {
         model: MODEL,
         messages,
-        max_tokens: 150,
+        max_tokens: 512,
         temperature: 0.8,
       };
 
@@ -83,7 +83,7 @@ export class OpenRouterProvider implements AIProvider {
       const body = {
         model: MODEL,
         messages,
-        max_tokens: 200,
+        max_tokens: 512,
         temperature: 0.4,
       };
 
