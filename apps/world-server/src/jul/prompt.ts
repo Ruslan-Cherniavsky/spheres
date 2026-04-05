@@ -2,6 +2,8 @@ import type { DialogueContext } from './providers/ai-provider.js';
 import type { UserRelationship } from './memory.js';
 import { JUL_CHARACTER_PROMPT } from './personality.js';
 
+const MAX_MEMORY_CHARS = 500;
+
 function describeMood(mood: number): string {
   if (mood > 0.8) return 'feeling warm and content';
   if (mood > 0.6) return 'in a calm, gentle mood';
@@ -12,6 +14,7 @@ function describeMood(mood: number): string {
 
 function buildRelationshipContext(rel: UserRelationship): string {
   const parts: string[] = [];
+
   if (rel.familiarity > 0.5) parts.push('You know this person fairly well.');
   else if (rel.familiarity > 0.2) parts.push('You have met this person before.');
   else parts.push('This is someone new to you.');
@@ -20,10 +23,18 @@ function buildRelationshipContext(rel: UserRelationship): string {
   else if (rel.trust > 0.4) parts.push('You are cautiously open with them.');
   else parts.push('You are still guarded around them.');
 
-  if (rel.memorySummary) parts.push(`Your memory of past interactions: ${rel.memorySummary}`);
+  if (rel.memorySummary) {
+    const trimmed = rel.memorySummary.trim().slice(0, MAX_MEMORY_CHARS);
+    if (trimmed) parts.push(`Your memory of past interactions: ${trimmed}`);
+  }
 
   return parts.join(' ');
 }
+
+const INTERACTION_INSTRUCTIONS: Record<string, string> = {
+  greeting: 'You are initiating contact with this person. Say a soft, shy greeting in their language. Be natural and brief. Do not introduce yourself unless asked.',
+  farewell: 'You need to say goodbye now. Say it naturally and gently, like a real person leaving a chat. Do not be dramatic.',
+};
 
 export function buildDialoguePrompt(
   context: DialogueContext,
@@ -31,26 +42,23 @@ export function buildDialoguePrompt(
   const moodDesc = describeMood(context.mood);
   const relContext = buildRelationshipContext(context.relationship);
 
-  let systemContent = `${JUL_CHARACTER_PROMPT}\n\nCurrent state: You are ${moodDesc}.`;
-  if (context.energy < 0.3) systemContent += ' You feel a bit tired.';
+  let instruction = `${JUL_CHARACTER_PROMPT}\n\nCurrent state: You are ${moodDesc}.`;
+  instruction += `\n\n${relContext}`;
 
-  systemContent += `\n\n${relContext}`;
-
-  if (context.interactionType === 'greeting') {
-    systemContent += '\n\nYou are initiating contact with this person. Say a soft, shy greeting. Be natural and brief.';
-  } else if (context.interactionType === 'farewell') {
-    systemContent += '\n\nYou need to say goodbye now. You are tired or need to fly away. Say farewell naturally and gently.';
-  }
+  const extra = INTERACTION_INSTRUCTIONS[context.interactionType];
+  if (extra) instruction += `\n\n${extra}`;
 
   const messages: Array<{ role: string; content: string }> = [
-    { role: 'user', content: systemContent },
+    { role: 'user', content: instruction },
     { role: 'assistant', content: 'Understood.' },
   ];
 
   for (const msg of context.recentMessages) {
+    const text = msg.text?.trim();
+    if (!text) continue;
     messages.push({
       role: msg.role === 'jul' ? 'assistant' : 'user',
-      content: msg.text,
+      content: text,
     });
   }
 
@@ -58,8 +66,8 @@ export function buildDialoguePrompt(
     messages.push({ role: 'user', content: '[A new sphere approaches you. Start the conversation.]' });
   } else if (context.interactionType === 'farewell') {
     messages.push({ role: 'user', content: '[You need to say goodbye now.]' });
-  } else if (context.userMessage) {
-    messages.push({ role: 'user', content: context.userMessage });
+  } else if (context.userMessage?.trim()) {
+    messages.push({ role: 'user', content: context.userMessage.trim() });
   }
 
   return messages;
@@ -70,14 +78,17 @@ export function buildSummaryPrompt(
   _relationship: UserRelationship,
 ): Array<{ role: string; content: string }> {
   const transcript = conversationMessages
-    .map((m) => `${m.role === 'jul' ? 'Jul' : 'User'}: ${m.text}`)
+    .filter((m) => m.text?.trim())
+    .map((m) => `${m.role === 'jul' ? 'Jul' : 'User'}: ${m.text.trim()}`)
     .join('\n');
+
+  if (!transcript) return [];
 
   return [
     {
       role: 'user',
       content:
-        'Summarize this conversation in 2-3 sentences. Focus on: what was discussed, emotional tone, any important details the speaker should remember for future meetings. Be concise.',
+        'Summarize this conversation in 2-3 sentences. Focus on: what was discussed, emotional tone, any important details to remember for future meetings. Be concise.',
     },
     {
       role: 'assistant',

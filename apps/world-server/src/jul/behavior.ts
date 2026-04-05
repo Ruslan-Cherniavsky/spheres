@@ -24,8 +24,8 @@ function applyInternalDrift(state: JulState, dt: number): void {
   state.mood = clamp01(driftToward(state.mood, 0.6, 0.01, dt) + jitter);
   state.energy = clamp01(
     state.mode === 'resting'
-      ? state.energy + 0.03 * dt
-      : state.energy - 0.005 * dt,
+      ? state.energy + 0.05 * dt
+      : state.energy - 0.0005 * dt,
   );
   state.curiosity = clamp01(state.curiosity + (Math.random() - 0.5) * 0.04 * dt);
 
