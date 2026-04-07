@@ -169,6 +169,9 @@ export async function handleJulChatMessage(
   julState.conversationMessages.push({ role: 'user', text });
   replyInProgress = true;
 
+  const userSock = callbacks?.findSocketByUid(fromUid);
+  userSock?.emit('typing_start', { fromUid: JUL_UID });
+
   if (isAtDailyLimit(julState)) {
     try {
       const rel = await memory.getRelationship(fromUid);
@@ -188,6 +191,7 @@ export async function handleJulChatMessage(
       setTimeout(() => {
         const msg = { fromUid: JUL_UID, text: farewell, timestamp: Date.now() };
         const sock = callbacks?.findSocketByUid(fromUid);
+        sock?.emit('typing_stop', { fromUid: JUL_UID });
         sock?.emit('chat_message', msg);
         replyInProgress = false;
       }, delay);
@@ -197,6 +201,7 @@ export async function handleJulChatMessage(
       setTimeout(() => {
         const msg = { fromUid: JUL_UID, text: 'I need to go now... goodbye.', timestamp: Date.now() };
         const sock = callbacks?.findSocketByUid(fromUid);
+        sock?.emit('typing_stop', { fromUid: JUL_UID });
         sock?.emit('chat_message', msg);
         replyInProgress = false;
       }, 1000);
@@ -224,6 +229,7 @@ export async function handleJulChatMessage(
     setTimeout(() => {
       const msg = { fromUid: JUL_UID, text: reply, timestamp: Date.now() };
       const sock = callbacks?.findSocketByUid(fromUid);
+      sock?.emit('typing_stop', { fromUid: JUL_UID });
       sock?.emit('chat_message', msg);
       replyInProgress = false;
     }, delay);
@@ -232,6 +238,7 @@ export async function handleJulChatMessage(
     setTimeout(() => {
       const msg = { fromUid: JUL_UID, text: '...', timestamp: Date.now() };
       const sock = callbacks?.findSocketByUid(fromUid);
+      sock?.emit('typing_stop', { fromUid: JUL_UID });
       sock?.emit('chat_message', msg);
       replyInProgress = false;
     }, 1000);

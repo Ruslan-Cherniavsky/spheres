@@ -13,6 +13,8 @@ export interface ClientEvents {
   request_contact: (data: { targetUid: string }) => void;
   respond_contact: (data: { fromUid: string; accept: boolean }) => void;
   chat_message: (data: { toUid: string; text: string }) => void;
+  typing_start: (data: { toUid: string }) => void;
+  typing_stop: (data: { toUid: string }) => void;
   end_chat: (data: { withUid: string }) => void;
   rate_core: (data: { withUid: string; value: number }) => void;
   report_user: (data: { targetUid: string }) => void;
@@ -43,6 +45,8 @@ export interface ServerEvents {
     text: string;
     timestamp: number;
   }) => void;
+  typing_start: (data: { fromUid: string }) => void;
+  typing_stop: (data: { fromUid: string }) => void;
   chat_ended: (data: { withUid: string; ratingCooldownUntil?: number }) => void;
   core_updated: (data: { uid: string; coreValue: number }) => void;
   rating_received: (data: { fromUid: string; value: number; newCoreValue: number }) => void;

@@ -38,6 +38,7 @@ interface WorldStore {
   // Chat
   chatMessages: ChatMessage[];
   chatMessageCount: number;
+  isPartnerTyping: boolean;
 
   // Rating feedback
   ratingFeedback: { value: number; timestamp: number } | null;
@@ -63,6 +64,8 @@ interface WorldStore {
   requestContact: (targetUid: string) => void;
   respondContact: (fromUid: string, accept: boolean) => void;
   sendChatMessage: (text: string) => void;
+  emitTypingStart: () => void;
+  emitTypingStop: () => void;
   endChat: () => void;
   reportUser: () => void;
   submitRating: (value: number) => void;
@@ -84,6 +87,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
   requestStartedAt: null,
   chatMessages: [],
   chatMessageCount: 0,
+  isPartnerTyping: false,
   ratingFeedback: null,
   spawnPosition: null,
   kickedMessage: null,
@@ -143,6 +147,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         updates.contactState = 'idle';
         updates.contactTargetUid = null;
         updates.incomingFromUid = null;
+        updates.isPartnerTyping = false;
       }
 
       set(updates as any);
@@ -192,6 +197,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         requestStartedAt: null,
         chatMessages: [],
         chatMessageCount: 0,
+        isPartnerTyping: false,
       });
     });
 
@@ -202,7 +208,16 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
           ...chatMessages,
           { fromUid, text, timestamp, isOwn: fromUid === self },
         ],
+        isPartnerTyping: false,
       });
+    });
+
+    socket.on('typing_start', () => {
+      set({ isPartnerTyping: true });
+    });
+
+    socket.on('typing_stop', () => {
+      set({ isPartnerTyping: false });
     });
 
     socket.on('request_declined', ({ byUid }) => {
@@ -234,6 +249,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
             requestStartedAt: null,
             chatMessages: [],
             chatMessageCount: 0,
+            isPartnerTyping: false,
             rateBlocked: true,
             rateBlockedTimeLeft: timeStr,
           });
@@ -242,9 +258,9 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         }
       }
       if (chatMessageCount >= 1) {
-        set({ contactState: 'rating', contactTargetUid: withUid, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
+        set({ contactState: 'rating', contactTargetUid: withUid, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0, isPartnerTyping: false });
       } else {
-        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0 });
+        set({ contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null, chatMessages: [], chatMessageCount: 0, isPartnerTyping: false });
       }
     });
 
@@ -281,7 +297,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     socket.on('error', ({ message, code }) => {
       console.error('[socket] error:', message);
       if (code === 'DUPLICATE_SESSION') {
-        set({ kickedMessage: message, connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
+        set({ kickedMessage: message, connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null, isPartnerTyping: false });
         return;
       }
       const { contactState } = get();
@@ -291,7 +307,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     });
 
     socket.on('disconnect', () => {
-      set({ connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null });
+      set({ connected: false, contactState: 'idle', contactTargetUid: null, incomingFromUid: null, requestStartedAt: null, isPartnerTyping: false });
     });
 
     socket.connect();
@@ -346,6 +362,7 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
         requestStartedAt: null,
         chatMessages: [],
         chatMessageCount: 0,
+        isPartnerTyping: false,
       });
     } else {
       set({ contactState: 'idle', incomingFromUid: null, requestStartedAt: null });
@@ -359,6 +376,18 @@ export const useWorldStore = create<WorldStore>((set, get) => ({
     if (!trimmed || trimmed.length > 500) return;
     socket.emit('chat_message', { toUid: contactTargetUid, text: trimmed });
     set({ chatMessageCount: chatMessageCount + 1 });
+  },
+
+  emitTypingStart: () => {
+    const { socket, connected, contactState, contactTargetUid } = get();
+    if (!socket || !connected || contactState !== 'chatting' || !contactTargetUid) return;
+    socket.emit('typing_start', { toUid: contactTargetUid });
+  },
+
+  emitTypingStop: () => {
+    const { socket, connected, contactState, contactTargetUid } = get();
+    if (!socket || !connected || contactState !== 'chatting' || !contactTargetUid) return;
+    socket.emit('typing_stop', { toUid: contactTargetUid });
   },
 
   endChat: () => {

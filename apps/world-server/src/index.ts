@@ -361,6 +361,29 @@ io.on('connection', (socket) => {
     }
   });
 
+  // ── Typing indicator relay ─────────────────
+  socket.on('typing_start', ({ toUid }) => {
+    const meta = socketMeta.get(socket.id);
+    if (!meta) return;
+    const sender = worldManager.getPlayer(meta.worldId, meta.uid);
+    if (!sender || sender.status !== 'chatting') return;
+    const target = worldManager.getPlayer(meta.worldId, toUid);
+    if (!target || target.isAI || isJulUid(toUid)) return;
+    const targetSock = findSocketByUid(toUid);
+    targetSock?.emit('typing_start', { fromUid: meta.uid });
+  });
+
+  socket.on('typing_stop', ({ toUid }) => {
+    const meta = socketMeta.get(socket.id);
+    if (!meta) return;
+    const sender = worldManager.getPlayer(meta.worldId, meta.uid);
+    if (!sender || sender.status !== 'chatting') return;
+    const target = worldManager.getPlayer(meta.worldId, toUid);
+    if (!target || target.isAI || isJulUid(toUid)) return;
+    const targetSock = findSocketByUid(toUid);
+    targetSock?.emit('typing_stop', { fromUid: meta.uid });
+  });
+
   // ── End chat ───────────────────────────
   socket.on('end_chat', async ({ withUid }) => {
     const meta = socketMeta.get(socket.id);
@@ -570,15 +593,22 @@ const AI_PHRASES = [
 
 function scheduleAIChat(worldId: string, requesterUid: string, aiUid: string) {
   const delay = 1500 + Math.random() * 3000;
+  const reqSock = findSocketByUid(requesterUid);
+  reqSock?.emit('typing_start', { fromUid: aiUid });
   setTimeout(() => {
     const ai = worldManager.getPlayer(worldId, aiUid);
     const requester = worldManager.getPlayer(worldId, requesterUid);
-    if (!ai || !requester || ai.status !== 'chatting' || requester.status !== 'chatting') return;
+    if (!ai || !requester || ai.status !== 'chatting' || requester.status !== 'chatting') {
+      const sock = findSocketByUid(requesterUid);
+      sock?.emit('typing_stop', { fromUid: aiUid });
+      return;
+    }
 
     const text = AI_PHRASES[Math.floor(Math.random() * AI_PHRASES.length)];
     const msg = { fromUid: aiUid, text, timestamp: Date.now() };
-    const reqSock = findSocketByUid(requesterUid);
-    reqSock?.emit('chat_message', msg);
+    const sock = findSocketByUid(requesterUid);
+    sock?.emit('typing_stop', { fromUid: aiUid });
+    sock?.emit('chat_message', msg);
   }, delay);
 }
 

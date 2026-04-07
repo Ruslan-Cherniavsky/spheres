@@ -10,6 +10,9 @@ export default function ChatOverlay() {
   const sendChatMessage = useWorldStore((s) => s.sendChatMessage);
   const endChat = useWorldStore((s) => s.endChat);
   const reportUser = useWorldStore((s) => s.reportUser);
+  const isPartnerTyping = useWorldStore((s) => s.isPartnerTyping);
+  const emitTypingStart = useWorldStore((s) => s.emitTypingStart);
+  const emitTypingStop = useWorldStore((s) => s.emitTypingStop);
   const language = useUserStore((s) => s.language);
   const t = useTranslation();
 
@@ -19,10 +22,12 @@ export default function ChatOverlay() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages.length]);
+  }, [chatMessages.length, isPartnerTyping]);
 
   useEffect(() => {
     if (contactState === 'chatting') {
@@ -44,12 +49,37 @@ export default function ChatOverlay() {
     return () => document.removeEventListener('pointerdown', handleClick);
   }, [menuOpen]);
 
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+
+    if (!isTypingRef.current && e.target.value.length > 0) {
+      isTypingRef.current = true;
+      emitTypingStart();
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        emitTypingStop();
+      }
+    }, 2000);
+  }, [emitTypingStart, emitTypingStop]);
+
   const handleSend = useCallback(() => {
     if (!input.trim()) return;
+    if (isTypingRef.current) {
+      isTypingRef.current = false;
+      emitTypingStop();
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
     sendChatMessage(input);
     setInput('');
     inputRef.current?.focus();
-  }, [input, sendChatMessage]);
+  }, [input, sendChatMessage, emitTypingStop]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -68,6 +98,15 @@ export default function ChatOverlay() {
     setReported(true);
     setMenuOpen(false);
   }, [reported, reportUser]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+      }
+    };
+  }, []);
 
   if (contactState !== 'chatting') return null;
 
@@ -114,6 +153,15 @@ export default function ChatOverlay() {
               <span className="chat-text">{msg.text}</span>
             </div>
           ))}
+          {isPartnerTyping && (
+            <div className="chat-bubble other typing-indicator">
+              <span className="typing-dots">
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+                <span className="typing-dot" />
+              </span>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
 
@@ -123,7 +171,7 @@ export default function ChatOverlay() {
             className="chat-input"
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={t.chat.placeholder}
             maxLength={500}
