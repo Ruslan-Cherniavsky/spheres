@@ -635,7 +635,7 @@ button {
   border-radius: 16px;
   backdrop-filter: blur(16px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 40px rgba(74, 144, 217, 0.08);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .chat-header {
@@ -645,6 +645,7 @@ button {
   padding: 0.6rem 0.8rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
 }
 
 .chat-end-btn {
@@ -830,6 +831,7 @@ button {
   padding: 0.6rem 0.8rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-shrink: 0;
+  border-radius: 0 0 16px 16px;
 }
 
 .chat-input {
@@ -872,6 +874,66 @@ button {
 .chat-send-btn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
+}
+
+/* ── Emoji picker ─────────────────────── */
+
+.emoji-picker-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.emoji-toggle-btn {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.emoji-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.emoji-picker {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 2px;
+  width: 280px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 20;
+}
+
+.emoji-item {
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.emoji-item:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 /* ── Info popup (account) ───────────────── */

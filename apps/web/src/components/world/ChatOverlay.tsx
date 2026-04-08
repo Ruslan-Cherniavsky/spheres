@@ -3,6 +3,14 @@ import { useWorldStore } from '../../stores/worldStore';
 import { useUserStore } from '../../stores/userStore';
 import { useTranslation } from '../../i18n/useTranslation';
 
+const EMOJI_LIST = [
+  '😊', '😂', '❤️', '👍', '🔥', '😍', '🤔', '😭',
+  '😎', '🥺', '🙏', '💀', '😅', '🤣', '😢', '😤',
+  '😁', '💯', '🎉', '✨', '😏', '🥰', '😔', '😳',
+  '🤗', '👋', '💔', '🤝', '🙌', '👀', '😜', '💪',
+  '😴', '🤯',
+];
+
 export default function ChatOverlay() {
   const contactState = useWorldStore((s) => s.contactState);
   const chatMessages = useWorldStore((s) => s.chatMessages);
@@ -19,9 +27,11 @@ export default function ChatOverlay() {
   const [input, setInput] = useState('');
   const [reported, setReported] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTypingRef = useRef(false);
 
@@ -33,6 +43,7 @@ export default function ChatOverlay() {
     if (contactState === 'chatting') {
       setReported(false);
       setMenuOpen(false);
+      setEmojiOpen(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [contactState]);
@@ -48,6 +59,17 @@ export default function ChatOverlay() {
     document.addEventListener('pointerdown', handleClick);
     return () => document.removeEventListener('pointerdown', handleClick);
   }, [menuOpen]);
+
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setEmojiOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClick);
+    return () => document.removeEventListener('pointerdown', handleClick);
+  }, [emojiOpen]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -98,6 +120,24 @@ export default function ChatOverlay() {
     setReported(true);
     setMenuOpen(false);
   }, [reported, reportUser]);
+
+  const handleEmojiSelect = useCallback((emoji: string) => {
+    setInput((prev) => prev + emoji);
+    setEmojiOpen(false);
+    inputRef.current?.focus();
+
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      emitTypingStart();
+    }
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        emitTypingStop();
+      }
+    }, 2000);
+  }, [emitTypingStart, emitTypingStop]);
 
   useEffect(() => {
     return () => {
@@ -166,6 +206,29 @@ export default function ChatOverlay() {
         </div>
 
         <div className="chat-input-row">
+          <div className="emoji-picker-wrap" ref={emojiRef}>
+            <button
+              className="emoji-toggle-btn"
+              onClick={() => setEmojiOpen((v) => !v)}
+              type="button"
+            >
+              😊
+            </button>
+            {emojiOpen && (
+              <div className="emoji-picker">
+                {EMOJI_LIST.map((emoji) => (
+                  <button
+                    key={emoji}
+                    className="emoji-item"
+                    onClick={() => handleEmojiSelect(emoji)}
+                    type="button"
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <input
             ref={inputRef}
             className="chat-input"
