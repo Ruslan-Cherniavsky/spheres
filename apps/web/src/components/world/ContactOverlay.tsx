@@ -3,7 +3,9 @@ import { useWorldStore } from '../../stores/worldStore';
 import { WORLD_CONFIG } from '@spheres/shared';
 import { useTranslation } from '../../i18n/useTranslation';
 
-export default function ContactOverlay() {
+type Props = { isMobile?: boolean };
+
+export default function ContactOverlay({ isMobile }: Props) {
   const nearestPlayer = useWorldStore((s) => s.nearestPlayer);
   const contactState = useWorldStore((s) => s.contactState);
   const incomingFromUid = useWorldStore((s) => s.incomingFromUid);
@@ -38,9 +40,9 @@ export default function ContactOverlay() {
       {/* Near a sphere + idle + no cooldown */}
       {contactState === 'idle' && nearestPlayer && !isOnCooldown && (
         <div className="contact-prompt">
-          <span className="contact-hint">{t.world.contact.pressE}</span>
+          {!isMobile && <span className="contact-hint">{t.world.contact.pressE}</span>}
           <button
-            className="hud-btn contact-btn"
+            className={`hud-btn contact-btn${isMobile ? ' contact-btn-mobile' : ''}`}
             onPointerDown={(e) => {
               e.stopPropagation();
               requestContact(nearestPlayer.uid);
@@ -72,12 +74,12 @@ export default function ContactOverlay() {
 
       {/* Incoming request */}
       {contactState === 'incoming' && incomingFromUid && (
-        <div className="contact-incoming">
+        <div className={`contact-incoming${isMobile ? ' contact-incoming-mobile' : ''}`}>
           <p className="contact-incoming-title">
             {t.world.contact.incomingTitle}
             {timeoutLeft !== null && <span className="contact-timer">{timeoutLeft}s</span>}
           </p>
-          <div className="contact-actions">
+          <div className={`contact-actions${isMobile ? ' contact-actions-mobile' : ''}`}>
             <button
               className="btn btn-primary"
               onPointerDown={(e) => {

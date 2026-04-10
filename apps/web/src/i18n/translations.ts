@@ -43,6 +43,7 @@ interface TranslationStrings {
     hintFlying: string;
     hintChatting: string;
     hintLocked: string;
+    hintMobile: string;
     contact: {
       pressE: string;
       btn: string;
@@ -238,6 +239,7 @@ but consciousnesses do.`,
       hintFlying: 'WASD move · Mouse look · Shift boost · E contact · ESC menu',
       hintChatting: 'Type to chat · ESC menu',
       hintLocked: 'Click to fly',
+      hintMobile: 'Tap to move',
       contact: {
         pressE: 'Press E to Contact',
         btn: 'Contact',
@@ -427,6 +429,7 @@ but consciousnesses do.`,
       hintFlying: 'WASD תזוזה · עכבר כיוון · Shift האצה · E קשר · ESC תפריט',
       hintChatting: 'הקלד לשיחה · ESC תפריט',
       hintLocked: 'לחץ לטוס',
+      hintMobile: 'הקש כדי לזוז',
       contact: {
         pressE: 'לחץ E לקשר',
         btn: 'קשר',
@@ -617,6 +620,7 @@ Spheres — это социальный эксперимент.
       hintFlying: 'WASD движение · Мышь обзор · Shift ускорение · E контакт · ESC меню',
       hintChatting: 'Печатайте · ESC меню',
       hintLocked: 'Нажмите для полёта',
+      hintMobile: 'Нажмите для перемещения',
       contact: {
         pressE: 'Нажмите E для контакта',
         btn: 'Контакт',

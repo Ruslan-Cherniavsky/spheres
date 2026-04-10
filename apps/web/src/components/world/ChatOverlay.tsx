@@ -11,7 +11,9 @@ const EMOJI_LIST = [
   '😴', '🤯',
 ];
 
-export default function ChatOverlay() {
+type Props = { isMobile?: boolean };
+
+export default function ChatOverlay({ isMobile }: Props) {
   const contactState = useWorldStore((s) => s.contactState);
   const chatMessages = useWorldStore((s) => s.chatMessages);
   const chatMessageCount = useWorldStore((s) => s.chatMessageCount);
@@ -28,6 +30,7 @@ export default function ChatOverlay() {
   const [reported, setReported] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -47,6 +50,19 @@ export default function ChatOverlay() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [contactState]);
+
+  useEffect(() => {
+    if (!isMobile || !window.visualViewport) return;
+    const vv = window.visualViewport;
+    const handleResize = () => {
+      const offset = window.innerHeight - vv.height;
+      if (overlayRef.current) {
+        overlayRef.current.style.paddingBottom = offset > 0 ? `${offset}px` : '';
+      }
+    };
+    vv.addEventListener('resize', handleResize);
+    return () => vv.removeEventListener('resize', handleResize);
+  }, [isMobile, contactState]);
 
   // Close menu on outside click
   useEffect(() => {
@@ -152,8 +168,8 @@ export default function ChatOverlay() {
 
 
   return (
-    <div className="chat-overlay">
-      <div className="chat-panel">
+    <div ref={overlayRef} className={`chat-overlay${isMobile ? ' mobile' : ''}`}>
+      <div className={`chat-panel${isMobile ? ' chat-panel-mobile' : ''}`}>
         <div className="chat-header">
           <button
             className="chat-end-btn"
@@ -205,7 +221,7 @@ export default function ChatOverlay() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="chat-input-row">
+        <div className={`chat-input-row${isMobile ? ' chat-input-row-mobile' : ''}`}>
           <div className="emoji-picker-wrap" ref={emojiRef}>
             <button
               className="emoji-toggle-btn"
@@ -215,7 +231,7 @@ export default function ChatOverlay() {
               😊
             </button>
             {emojiOpen && (
-              <div className="emoji-picker">
+              <div className={`emoji-picker${isMobile ? ' emoji-picker-mobile' : ''}`}>
                 {EMOJI_LIST.map((emoji) => (
                   <button
                     key={emoji}

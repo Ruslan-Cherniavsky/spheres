@@ -12,6 +12,7 @@ interface Props {
   coreValue: number;
   isAI?: boolean;
   highlighted?: boolean;
+  lowDetail?: boolean;
 }
 
 const INTERP_SPEED = 12;
@@ -41,6 +42,7 @@ export default function RemoteSphere({
   aura,
   coreValue,
   highlighted,
+  lowDetail = false,
 }: Props) {
   const groupRef = useRef<THREE.Group>(null!);
   const ringGroupRef = useRef<THREE.Group>(null!);
@@ -94,7 +96,7 @@ export default function RemoteSphere({
 
   return (
     <group ref={groupRef}>
-      <PlayerSphere aura={aura} coreValue={coreValue} />
+      <PlayerSphere aura={aura} coreValue={coreValue} lowDetail={lowDetail} />
       {highlighted && (
         <group ref={ringGroupRef} rotation={[Math.PI / 2.8, 0.2, 0]}>
           {layout.map((ring, i) => (
@@ -104,7 +106,7 @@ export default function RemoteSphere({
               position={[0, 0, ring.zOff]}
               renderOrder={2}
             >
-              <ringGeometry args={[ring.inner, ring.outer, 96]} />
+              <ringGeometry args={[ring.inner, ring.outer, lowDetail ? 48 : 96]} />
             </mesh>
           ))}
         </group>

@@ -32,6 +32,7 @@ interface Props {
   coreValue: number;
   speed?: number;
   emitLight?: boolean;
+  lowDetail?: boolean;
 }
 
 const SPAWN_DURATION = 1.2;
@@ -41,7 +42,7 @@ const SPAWN_EMISSIVE_START = 6.0;
 const SPAWN_EMISSIVE_END = 2.0;
 const SPAWN_PHASE1_END_SCALE = SPAWN_SCALE_PEAK * (1 - Math.exp(-5 * SPAWN_PHASE1_END));
 
-export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = false }: Props) {
+export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = false, lowDetail = false }: Props) {
   const auraColor = AURA_COLORS[aura];
   const coreRef = useRef<THREE.Mesh>(null!);
   const groupRef = useRef<THREE.Group>(null!);
@@ -122,7 +123,7 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
   return (
     <group ref={groupRef}>
       <mesh ref={coreRef} renderOrder={0}>
-        <sphereGeometry args={[0.2, 32, 32]} />
+        <sphereGeometry args={[0.2, lowDetail ? 16 : 32, lowDetail ? 16 : 32]} />
         <meshStandardMaterial
           color={auraColor}
           emissive={auraColor}
@@ -141,7 +142,7 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
           renderOrder={1}
           frustumCulled={false}
         >
-          <sphereGeometry args={[0.4, 32, 32]} />
+          <sphereGeometry args={[0.4, lowDetail ? 16 : 32, lowDetail ? 16 : 32]} />
         </mesh>
       ))}
 

@@ -10,6 +10,7 @@ interface Props {
   language: SupportedLanguage;
   connected: boolean;
   pointerLocked: boolean;
+  isMobile?: boolean;
   onAuraChange: (aura: AuraType) => void;
   onBack: () => void;
 }
@@ -19,6 +20,7 @@ export default function WorldHUD({
   language,
   connected,
   pointerLocked,
+  isMobile,
   onAuraChange,
   onBack,
 }: Props) {
@@ -27,7 +29,7 @@ export default function WorldHUD({
   const t = useTranslation();
 
   return (
-    <div className="world-hud">
+    <div className={`world-hud${isMobile ? ' mobile' : ''}`}>
       {/* ── Top bar ───────────────────────── */}
       <div className="hud-top">
         <div className="hud-status">
@@ -42,41 +44,45 @@ export default function WorldHUD({
       </div>
 
       {/* ── Bottom bar ────────────────────── */}
-      <div className="hud-bottom">
-        <div style={{ position: 'relative' }}>
-          {showAuraPicker && !pointerLocked && (
-            <div className="hud-aura-panel">
-              <AuraPicker
-                current={aura}
-                language={language}
-                onChange={(a) => {
-                  onAuraChange(a);
-                  setShowAuraPicker(false);
+      {contactState !== 'chatting' && contactState !== 'rating' && (
+        <div className="hud-bottom">
+          <div style={{ position: 'relative' }}>
+            {showAuraPicker && (isMobile || !pointerLocked) && (
+              <div className="hud-aura-panel">
+                <AuraPicker
+                  current={aura}
+                  language={language}
+                  onChange={(a) => {
+                    onAuraChange(a);
+                    setShowAuraPicker(false);
+                  }}
+                />
+              </div>
+            )}
+            <button
+              className="hud-btn hud-aura-btn"
+              onClick={() => setShowAuraPicker((v) => !v)}
+              style={{ borderColor: AURA_COLORS[aura] }}
+            >
+              <span
+                className="aura-dot"
+                style={{
+                  background: AURA_COLORS[aura],
+                  boxShadow: `0 0 8px ${AURA_COLORS[aura]}`,
                 }}
               />
-            </div>
-          )}
-          <button
-            className="hud-btn hud-aura-btn"
-            onClick={() => setShowAuraPicker((v) => !v)}
-            style={{ borderColor: AURA_COLORS[aura] }}
-          >
-            <span
-              className="aura-dot"
-              style={{
-                background: AURA_COLORS[aura],
-                boxShadow: `0 0 8px ${AURA_COLORS[aura]}`,
-              }}
-            />
-            {t.world.changeAura}
-          </button>
+              {t.world.changeAura}
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* ── Controls hint ─────────────────── */}
       <div className="hud-controls">
         {contactState === 'chatting' ? (
           <span>{t.world.hintChatting}</span>
+        ) : isMobile ? (
+          <span>{t.world.hintMobile}</span>
         ) : pointerLocked ? (
           <span>{t.world.hintFlying}</span>
         ) : (
@@ -85,7 +91,7 @@ export default function WorldHUD({
       </div>
 
       {/* ── Click to fly overlay ──────────── */}
-      {!pointerLocked && contactState !== 'chatting' && (
+      {!isMobile && !pointerLocked && contactState !== 'chatting' && (
         <div className="hud-center-hint">{t.world.hintLocked}</div>
       )}
     </div>

@@ -73,9 +73,14 @@ const _trailView = new THREE.Vector3();
 const _trailSide = new THREE.Vector3();
 const _trailUp = new THREE.Vector3(0, 1, 0);
 
+const MOBILE_LOOK_SPEED = 2.5;
+
 interface Props {
   aura: AuraType;
   coreValue: number;
+  isMobile: boolean;
+  joystickInput?: { x: number; y: number };
+  lookInput?: { x: number; y: number };
   onPositionUpdate?: (pos: THREE.Vector3, vel: THREE.Vector3) => void;
   onLockChange?: (locked: boolean) => void;
   initialPosition?: { x: number; y: number; z: number };
@@ -84,6 +89,9 @@ interface Props {
 export default function FlightController({
   aura,
   coreValue,
+  isMobile,
+  joystickInput,
+  lookInput,
   onPositionUpdate,
   onLockChange,
   initialPosition,
@@ -100,6 +108,9 @@ export default function FlightController({
   const sendInterval = 1000 / WORLD_CONFIG.positionUpdateRateHz;
   const sendPositionUpdate = useWorldStore((s) => s.sendPositionUpdate);
   const currentSpeed = useRef(0);
+
+  const CAM_DISTANCE = isMobile ? 7 : FLIGHT.cameraDistance;
+  const CAM_HEIGHT = isMobile ? 2.5 : FLIGHT.cameraHeight;
 
   const keys = useRef({
     w: false,
@@ -266,6 +277,7 @@ export default function FlightController({
   }, [gl, onLockChange]);
 
   useEffect(() => {
+    if (isMobile) return;
     const canvas = gl.domElement;
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -280,7 +292,7 @@ export default function FlightController({
       canvas.removeEventListener('click', handleClick);
       document.removeEventListener('pointerlockchange', handleLockChange);
     };
-  }, [gl, handleKeyDown, handleKeyUp, handleMouseMove, handleClick, handleLockChange]);
+  }, [isMobile, gl, handleKeyDown, handleKeyUp, handleMouseMove, handleClick, handleLockChange]);
 
   // ── Frame loop ──────────────────────────
 
@@ -317,14 +329,50 @@ export default function FlightController({
     _euler.set(pitch.current, yaw.current, 0, 'YXZ');
     _quat.setFromEuler(_euler);
 
-    if (!chatting) {
+    if (isMobile) {
+      if (chatting) {
+        velocity.current.set(0, 0, 0);
+        currentSpeed.current = 0;
+      } else {
+        const lx = lookInput?.x ?? 0;
+        const ly = lookInput?.y ?? 0;
+        if (Math.abs(lx) > 0.01 || Math.abs(ly) > 0.01) {
+          yaw.current -= lx * MOBILE_LOOK_SPEED * dt;
+          pitch.current += ly * MOBILE_LOOK_SPEED * dt;
+          pitch.current = THREE.MathUtils.clamp(pitch.current, -FLIGHT.maxPitch, FLIGHT.maxPitch);
+        }
+
+        _euler.set(pitch.current, yaw.current, 0, 'YXZ');
+        _quat.setFromEuler(_euler);
+
+        const jx = joystickInput?.x ?? 0;
+        const jy = joystickInput?.y ?? 0;
+
+        if (Math.abs(jx) > 0.01 || Math.abs(jy) > 0.01) {
+          _forward.set(0, 0, -1).applyQuaternion(_quat);
+          _right.set(1, 0, 0).applyQuaternion(_quat);
+
+          _inputDir.set(0, 0, 0);
+          _inputDir.addScaledVector(_forward, jy);
+          _inputDir.addScaledVector(_right, jx);
+          _inputDir.normalize().multiplyScalar(FLIGHT.acceleration * dt);
+          velocity.current.add(_inputDir);
+          if (velocity.current.length() > FLIGHT.normalSpeed) {
+            velocity.current.normalize().multiplyScalar(FLIGHT.normalSpeed);
+          }
+        }
+
+        velocity.current.multiplyScalar(Math.pow(FLIGHT.damping, dt * 60));
+        if (velocity.current.lengthSq() < 0.0001) velocity.current.set(0, 0, 0);
+        group.position.addScaledVector(velocity.current, dt);
+        currentSpeed.current = velocity.current.length();
+      }
+    } else if (!chatting) {
       const maxSpeed = k.shift ? FLIGHT.boostSpeed : FLIGHT.normalSpeed;
 
-      // Direction vectors
       _forward.set(0, 0, -1).applyQuaternion(_quat);
       _right.set(1, 0, 0).applyQuaternion(_quat);
 
-      // Accumulate input
       _inputDir.set(0, 0, 0);
       if (k.w) _inputDir.add(_forward);
       if (k.s) _inputDir.sub(_forward);
@@ -337,20 +385,15 @@ export default function FlightController({
         velocity.current.add(_inputDir);
       }
 
-      // Clamp to max speed
       if (velocity.current.length() > maxSpeed) {
         velocity.current.normalize().multiplyScalar(maxSpeed);
       }
 
-      // Frame-rate-independent damping
       velocity.current.multiplyScalar(Math.pow(FLIGHT.damping, dt * 60));
-
-      // Kill micro-drift
       if (velocity.current.lengthSq() < 0.0001) {
         velocity.current.set(0, 0, 0);
       }
 
-      // Move
       group.position.addScaledVector(velocity.current, dt);
       currentSpeed.current = velocity.current.length();
     } else {
@@ -362,7 +405,7 @@ export default function FlightController({
 
     // Camera follow
     _cameraOffset
-      .set(0, FLIGHT.cameraHeight, FLIGHT.cameraDistance)
+      .set(0, CAM_HEIGHT, CAM_DISTANCE)
       .applyQuaternion(_quat);
     _idealPos.copy(group.position).add(_cameraOffset);
 

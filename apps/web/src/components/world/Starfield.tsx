@@ -91,7 +91,11 @@ function initStar(
   pulseAmps[i] = CFG.pulseAmpBig + sizeFactor * (CFG.pulseAmpSmall - CFG.pulseAmpBig);
 }
 
-export default function Starfield({ count = CFG.count }) {
+type StarfieldProps = {
+  count?: number;
+};
+
+export default function Starfield({ count = CFG.count }: StarfieldProps) {
   const pointsRef = useRef<THREE.Points>(null!);
   const { camera } = useThree();
 

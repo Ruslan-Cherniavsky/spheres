@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../stores/authStore';
 import { useUserStore } from '../stores/userStore';
 import { useTranslation } from '../i18n/useTranslation';
+import { useIsMobile } from '../hooks/useDeviceCapabilities';
 import SpherePreview from '../components/SpherePreview';
 import AuraPicker from '../components/AuraPicker';
 import LanguageSelector from '../components/LanguageSelector';
@@ -11,6 +12,7 @@ import { AURA_COLORS, coreValueToRingCount } from '@spheres/shared';
 const ONBOARD_STORAGE_KEY = (uid: string) => `spheres_onboard_v1:${uid}`;
 
 export default function AccountPage() {
+  const isMobile = useIsMobile();
   const { user, signOut } = useAuthStore();
   const { profile, language, aura, coreValue, loading, loadProfile, setAura, setLanguage } =
     useUserStore();
@@ -80,6 +82,12 @@ export default function AccountPage() {
     <div className="account-layout">
       {/* Left panel — settings */}
       <div className="account-panel">
+        {isMobile && (
+          <div className="sphere-preview-card">
+            <SpherePreview aura={aura} coreValue={coreValue} showRings={showRings} />
+          </div>
+        )}
+
         <h1 style={{ fontSize: '1.5rem', fontWeight: 300, letterSpacing: '0.3em', marginBottom: '2rem' }}>
           {t.account.title}
         </h1>
@@ -225,10 +233,12 @@ export default function AccountPage() {
         </div>
       </div>
 
-      {/* Right panel — sphere preview */}
-      <div className="sphere-preview-panel">
-        <SpherePreview aura={aura} coreValue={coreValue} showRings={showRings} />
-      </div>
+      {/* Right panel — sphere preview (desktop only) */}
+      {!isMobile && (
+        <div className="sphere-preview-panel">
+          <SpherePreview aura={aura} coreValue={coreValue} showRings={showRings} />
+        </div>
+      )}
     </div>
   );
 }
