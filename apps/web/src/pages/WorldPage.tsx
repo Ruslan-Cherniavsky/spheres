@@ -15,8 +15,11 @@ import ContactOverlay from '../components/world/ContactOverlay';
 import ChatOverlay from '../components/world/ChatOverlay';
 import RatingOverlay from '../components/world/RatingOverlay';
 import RatingFeedback from '../components/world/RatingFeedback';
+import PerfProbe from '../components/world/PerfProbe';
+import PerfHUD from '../components/world/PerfHUD';
 import { useTranslation } from '../i18n/useTranslation';
 import { useIsMobile } from '../hooks/useDeviceCapabilities';
+import { usePerfProfile } from '../hooks/usePerfProfile';
 import VirtualJoystick from '../components/world/VirtualJoystick';
 
 export default function WorldPage() {
@@ -40,6 +43,11 @@ export default function WorldPage() {
     lookRef.current.x = input.x;
     lookRef.current.y = input.y;
   }, []);
+
+  const { profile, onMeasured } = usePerfProfile(isMobile);
+  const [liveFps, setLiveFps] = useState(0);
+  const isDev = import.meta.env.DEV;
+  const handleLiveFps = useCallback((fps: number) => setLiveFps(fps), []);
 
   useEffect(() => {
     if (!user) return;
@@ -70,13 +78,20 @@ export default function WorldPage() {
   const remoteEntries = Object.entries(remotePlayers);
   const highlightUid = contactTargetUid ?? nearestPlayer?.uid ?? null;
 
+  const useLowDetail = isMobile || profile.lowDetail;
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative', touchAction: 'none' }}>
       <Canvas
-        dpr={[1, isMobile ? 1.5 : 2]}
+        dpr={[1, profile.dpr]}
         camera={{ fov: 60, near: 0.1, far: 1000 }}
         style={{ background: '#000' }}
-        gl={{ antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.0 }}
+        gl={{
+          antialias: true,
+          toneMapping: THREE.ACESFilmicToneMapping,
+          toneMappingExposure: 1.0,
+          powerPreference: 'high-performance',
+        }}
       >
         <ambientLight intensity={0.15} />
         <Starfield />
@@ -95,7 +110,7 @@ export default function WorldPage() {
           <RemoteSphere
             key={uid}
             uid={uid}
-            lowDetail={isMobile}
+            lowDetail={useLowDetail}
             targetPosition={remote.targetPos}
             aura={remote.state.aura}
             coreValue={remote.state.coreValue}
@@ -103,15 +118,18 @@ export default function WorldPage() {
             highlighted={uid === highlightUid}
           />
         ))}
-        <EffectComposer>
-          <Bloom
-            intensity={isMobile ? 0.6 : 1}
-            luminanceThreshold={1}
-            radius={isMobile ? 0.3 : 0.55}
-            luminanceSmoothing={0.025}
-            mipmapBlur
-          />
-        </EffectComposer>
+        {profile.bloom !== 'off' && (
+          <EffectComposer>
+            <Bloom
+              intensity={profile.bloom === 'mobile' ? 0.6 : 1}
+              luminanceThreshold={1}
+              radius={profile.bloom === 'mobile' ? 0.3 : 0.55}
+              luminanceSmoothing={0.025}
+              mipmapBlur
+            />
+          </EffectComposer>
+        )}
+        <PerfProbe onResult={onMeasured} onLiveFps={isDev ? handleLiveFps : undefined} />
       </Canvas>
 
       <WorldHUD
@@ -133,6 +151,7 @@ export default function WorldPage() {
       <ChatOverlay isMobile={isMobile} />
       <RatingOverlay />
       <RatingFeedback />
+      {isDev && <PerfHUD fps={liveFps} profile={profile} />}
 
       {kickedMessage && (
         <div className="kicked-overlay">

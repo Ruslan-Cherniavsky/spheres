@@ -140,7 +140,6 @@ export default function PlayerSphere({ aura, coreValue, speed = 0, emitLight = f
           scale={layer.scale}
           material={glowMats[i]}
           renderOrder={1}
-          frustumCulled={false}
         >
           <sphereGeometry args={[0.4, lowDetail ? 16 : 32, lowDetail ? 16 : 32]} />
         </mesh>

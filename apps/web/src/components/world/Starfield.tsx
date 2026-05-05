@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useEffect } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
@@ -97,7 +97,7 @@ type StarfieldProps = {
 
 export default function Starfield({ count = CFG.count }: StarfieldProps) {
   const pointsRef = useRef<THREE.Points>(null!);
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
 
   const starData = useMemo(() => {
     const positions = new Float32Array(count * 3);
@@ -112,24 +112,25 @@ export default function Starfield({ count = CFG.count }: StarfieldProps) {
     }
 
     const geometry = new THREE.BufferGeometry();
-    const posAttr = new THREE.BufferAttribute(positions, 3);
-    posAttr.setUsage(THREE.DynamicDrawUsage);
-    geometry.setAttribute('position', posAttr);
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('aVelocity', new THREE.BufferAttribute(velocities, 3));
     geometry.setAttribute('aColor', new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
     geometry.setAttribute('aPhase', new THREE.BufferAttribute(phases, 1));
     geometry.setAttribute('aPulseAmp', new THREE.BufferAttribute(pulseAmps, 1));
+    geometry.boundingSphere = new THREE.Sphere(new THREE.Vector3(), CFG.shellMax * 2);
 
-    return { geometry, positions, velocities, colors, sizes, phases, pulseAmps };
+    return { geometry };
   }, [count]);
 
   const material = useMemo(() => {
     return new THREE.ShaderMaterial({
       uniforms: {
         uTime: { value: 0 },
-        uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
+        uPixelRatio: { value: gl.getPixelRatio() },
       },
       vertexShader: /* glsl */ `
+        attribute vec3 aVelocity;
         attribute vec3 aColor;
         attribute float aSize;
         attribute float aPhase;
@@ -142,7 +143,8 @@ export default function Starfield({ count = CFG.count }: StarfieldProps) {
         varying float vAlpha;
 
         void main() {
-          vec4 mv = modelViewMatrix * vec4(position, 1.0);
+          vec3 drifted = position + aVelocity * uTime;
+          vec4 mv = modelViewMatrix * vec4(drifted, 1.0);
 
           float speed1 = ${CFG.pulseSpeedMin.toFixed(1)} + aPhase * ${((CFG.pulseSpeedMax - CFG.pulseSpeedMin) / (Math.PI * 2)).toFixed(3)};
           float speed2 = ${CFG.pulseSpeedMin2.toFixed(1)} + aPhase * ${((CFG.pulseSpeedMax2 - CFG.pulseSpeedMin2) / (Math.PI * 2)).toFixed(3)};
@@ -175,30 +177,19 @@ export default function Starfield({ count = CFG.count }: StarfieldProps) {
     });
   }, []);
 
-  const shellMaxSq = CFG.shellMax * CFG.shellMax * 1.2;
+  useEffect(() => {
+    return () => {
+      starData.geometry.dispose();
+      material.dispose();
+    };
+  }, [starData, material]);
 
-  useFrame((state, delta) => {
-    const dt = Math.min(delta, 0.05);
-    const { positions, velocities, colors, sizes, phases, pulseAmps } = starData;
-    const posAttr = starData.geometry.attributes.position as THREE.BufferAttribute;
-
+  useFrame((state) => {
     material.uniforms.uTime.value = state.clock.elapsedTime;
-
-    pointsRef.current.position.copy(camera.position);
-
-    for (let i = 0; i < count; i++) {
-      const idx = i * 3;
-      positions[idx] += velocities[idx] * dt;
-      positions[idx + 1] += velocities[idx + 1] * dt;
-      positions[idx + 2] += velocities[idx + 2] * dt;
-
-      const x = positions[idx], y = positions[idx + 1], z = positions[idx + 2];
-      if (x * x + y * y + z * z > shellMaxSq) {
-        initStar(positions, velocities, colors, sizes, phases, pulseAmps, i);
-      }
+    material.uniforms.uPixelRatio.value = gl.getPixelRatio();
+    if (pointsRef.current) {
+      pointsRef.current.position.copy(camera.position);
     }
-
-    posAttr.needsUpdate = true;
   });
 
   return (
