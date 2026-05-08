@@ -38,6 +38,9 @@ const CFG = {
 
   // Fragment shape
   edgeSoftness: 0.15,            // smoothstep inner edge (0 = hard dot, 0.4 = very soft)
+
+  // Brightness boost (multiplies final alpha; >1 makes stars more visible without changing size)
+  brightness: 1.3,
 } as const;
 // ────────────────────────────────────────────────────────────────────
 
@@ -168,7 +171,7 @@ export default function Starfield({ count = CFG.count }: StarfieldProps) {
           if (d > 0.5) discard;
 
           float core = smoothstep(0.5, ${CFG.edgeSoftness.toFixed(2)}, d);
-          gl_FragColor = vec4(vColor, core * vAlpha);
+          gl_FragColor = vec4(vColor, core * vAlpha * ${CFG.brightness.toFixed(2)});
         }
       `,
       transparent: true,

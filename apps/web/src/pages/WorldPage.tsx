@@ -44,7 +44,7 @@ export default function WorldPage() {
     lookRef.current.y = input.y;
   }, []);
 
-  const { profile, onMeasured } = usePerfProfile(isMobile);
+  const { profile, onMeasured, setPreset, probeNonce } = usePerfProfile(isMobile);
   const [liveFps, setLiveFps] = useState(0);
   const isDev = import.meta.env.DEV;
   const handleLiveFps = useCallback((fps: number) => setLiveFps(fps), []);
@@ -129,7 +129,7 @@ export default function WorldPage() {
             />
           </EffectComposer>
         )}
-        <PerfProbe onResult={onMeasured} onLiveFps={isDev ? handleLiveFps : undefined} />
+        <PerfProbe key={probeNonce} onResult={onMeasured} onLiveFps={isDev ? handleLiveFps : undefined} />
       </Canvas>
 
       <WorldHUD
@@ -151,7 +151,7 @@ export default function WorldPage() {
       <ChatOverlay isMobile={isMobile} />
       <RatingOverlay />
       <RatingFeedback />
-      {isDev && <PerfHUD fps={liveFps} profile={profile} />}
+      {isDev && <PerfHUD fps={liveFps} profile={profile} onPresetChange={setPreset} />}
 
       {kickedMessage && (
         <div className="kicked-overlay">
