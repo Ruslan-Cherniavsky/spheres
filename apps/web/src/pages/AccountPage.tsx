@@ -22,6 +22,8 @@ export default function AccountPage() {
   const [showRings, setShowRings] = useState(false);
   const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [showAboutPopup, setShowAboutPopup] = useState(false);
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
   const onboardingPendingRef = useRef(false);
   const prevInfoPopupRef = useRef(false);
 
@@ -56,16 +58,17 @@ export default function AccountPage() {
   }, [showInfoPopup, user?.uid]);
 
   useEffect(() => {
-    if (!showInfoPopup && !showAboutPopup) return;
+    if (!showInfoPopup && !showAboutPopup && !showFeedbackPopup) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setShowInfoPopup(false);
         setShowAboutPopup(false);
+        setShowFeedbackPopup(false);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showInfoPopup, showAboutPopup]);
+  }, [showInfoPopup, showAboutPopup, showFeedbackPopup]);
 
   if (loading || !profile) {
     return (
@@ -77,6 +80,17 @@ export default function AccountPage() {
 
   const ringCount = coreValueToRingCount(coreValue);
   const ringsPercent = ((ringCount - 1) / 6) * 100;
+  const feedbackSubject = `Spheres feedback (${user?.email ?? 'unknown-user'})`;
+
+  const handleSendFeedback = () => {
+    const text = feedbackText.trim();
+    if (!text) return;
+    const body = `${text}\n\n---\nFrom: ${user?.email ?? 'unknown'}\nUID: ${user?.uid ?? 'unknown'}`;
+    const href = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent('nalsurion@gmail.com')}&su=${encodeURIComponent(feedbackSubject)}&body=${encodeURIComponent(body)}`;
+    window.open(href, '_blank', 'noopener,noreferrer');
+    setShowFeedbackPopup(false);
+    setFeedbackText('');
+  };
 
   return (
     <div className="account-layout">
@@ -132,6 +146,14 @@ export default function AccountPage() {
             onClick={() => setShowAboutPopup(true)}
           >
             {t.account.aboutSpheres}
+          </button>
+          <button
+            type="button"
+            className="btn btn-secondary"
+            style={{ width: '100%', fontSize: '0.9rem', opacity: 0.9 }}
+            onClick={() => setShowFeedbackPopup(true)}
+          >
+            Leave a feedback
           </button>
           </div>
         </div>
@@ -213,6 +235,48 @@ export default function AccountPage() {
               >
                 {t.account.close}
               </button>
+            </div>
+          </div>
+        )}
+
+        {showFeedbackPopup && (
+          <div
+            className="info-popup-overlay"
+            onClick={() => setShowFeedbackPopup(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Leave a feedback"
+          >
+            <div className="info-popup-panel" onClick={(e) => e.stopPropagation()}>
+              <h2 className="info-popup-title">Leave a feedback</h2>
+              <p className="feedback-popup-subtitle">Share what you think about Spheres. Your mail app will open with this text.</p>
+              <textarea
+                className="feedback-textarea"
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                placeholder="Write your thoughts, ideas, or bugs..."
+                rows={7}
+                maxLength={4000}
+              />
+              <div className="feedback-popup-row">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ width: '100%' }}
+                  onClick={() => setShowFeedbackPopup(false)}
+                >
+                  {t.account.close}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  style={{ width: '100%' }}
+                  onClick={handleSendFeedback}
+                  disabled={!feedbackText.trim()}
+                >
+                  Send to email
+                </button>
+              </div>
             </div>
           </div>
         )}
