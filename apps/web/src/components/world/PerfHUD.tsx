@@ -9,7 +9,7 @@ interface Props {
 
 const wrap: React.CSSProperties = {
   position: 'fixed',
-  top: 8,
+  top: 'max(52px, calc(env(safe-area-inset-top) + 52px))',
   right: 8,
   padding: '6px 10px',
   background: 'rgba(0, 0, 0, 0.6)',
